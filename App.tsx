@@ -1,10 +1,9 @@
-import React from 'react';
-// Importa o componente da tela de login
-import LoginScreen from './src/screens/tela_login'; 
+// No App.tsx
+// Comente as outras linhas e use:
+import RecoverPasswordScreen from './src/screens/recuperacao_senha'; 
 
 export default function App() {
   return (
-    // Renderiza a tela de login em vez do conteúdo padrão.
-    <LoginScreen />
+    <RecoverPasswordScreen />
   );
 }
