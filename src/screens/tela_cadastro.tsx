@@ -254,7 +254,7 @@ const styles = StyleSheet.create<Style>({
   linkText: {
     color: colors.textLight,
     fontSize: 14,
-    textAlign: 'center', // Centralizado fica melhor no final do form
+    textAlign: 'left', // Centralizado fica melhor no final do form
     textDecorationLine: 'underline',
     marginTop: 20, // Espaço entre o botão e o texto
   },

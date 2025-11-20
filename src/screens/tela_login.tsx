@@ -18,11 +18,11 @@ import {
 
 // @ts-ignore
 // O TypeScript no editor às vezes não reconhece imagens fora da pasta src.
-// Esse ignore evita o sublinhado vermelho, já que o Metro Bundler carrega a imagem corretamente.
+// O caminho '../..' é necessário porque este arquivo está em 'src/screens/'.
 import telaLogin from '../../assets/homem_sentado_login.png';
 
 // Interface para tipagem dos estilos.
-// Isso garante que o autocomplete funcione e evita erros de digitação nos estilos.
+// Ajuda o TypeScript a verificar se todas as chaves de estilo estão corretas.
 interface Style {
   safeArea: ViewStyle;
   keyboardAvoidingView: ViewStyle;
@@ -36,6 +36,7 @@ interface Style {
   spacingTop: ViewStyle;
   input: TextStyle;
   button: ViewStyle;
+  secondaryButton: ViewStyle; // Estilo para o botão de Cadastro (verde)
   buttonText: TextStyle;
   forgotPasswordText: TextStyle;
 }
@@ -45,16 +46,19 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Função de Login (Simulação - Front-end Only)
-  // Valida apenas se os campos foram preenchidos para feedback visual.
+  // Função de Login (Simulação)
   const handleLogin = () => {
     if (email && password) {
       // Em um app real, aqui faríamos a requisição para o Backend.
-      // Como é apenas front-end, mostramos um feedback de sucesso.
       Alert.alert('Sucesso', `Login simulado para: ${email}`);
     } else {
       Alert.alert('Atenção', 'Por favor, preencha e-mail e senha para continuar.');
     }
+  };
+
+  // Função para redirecionar para o Cadastro (Simulação)
+  const handleSignUpRedirect = () => {
+    Alert.alert('Navegação', 'Indo para a tela de cadastro...');
   };
 
   const handleForgotPassword = () => {
@@ -72,7 +76,7 @@ export default function LoginScreen() {
       >
         <ScrollView contentContainerStyle={styles.container}>
           
-          {/* Seção Superior: Identidade Visual */}
+          {/* Seção Superior: Identidade Visual (APOLLO e Imagem) */}
           <View style={styles.header}>
             <Text style={styles.titleText}>APOLLO</Text>
             <View style={styles.imageContainer}>
@@ -104,17 +108,27 @@ export default function LoginScreen() {
               style={styles.input}
               placeholder="••••••••••"
               placeholderTextColor="#9CA3AF"
-              secureTextEntry // Oculta os caracteres da senha
+              secureTextEntry
               value={password}
               onChangeText={setPassword}
             />
 
+            {/* Botão Entrar (Principal) */}
             <TouchableOpacity
               style={styles.button}
               onPress={handleLogin}
-              activeOpacity={0.8} // Efeito visual de clique
+              activeOpacity={0.8}
             >
               <Text style={styles.buttonText}>Entrar</Text>
+            </TouchableOpacity>
+
+            {/* Botão Cadastrar (Secundário - Verde) */}
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleSignUpRedirect}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.buttonText}>Cadastrar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleForgotPassword}>
@@ -128,11 +142,12 @@ export default function LoginScreen() {
   );
 }
 
-// Definição de Cores para facilitar manutenção futura
+// Definição de Cores
 const colors = {
   background: '#F9FAFB',
   cardBackground: '#1F2937',
   primary: '#4F68C4',
+  success: '#10B981', // Cor verde para o botão de cadastro
   inputBackground: '#FFFFFF',
   white: '#FFFFFF',
   textLight: '#E5E7EB',
@@ -150,7 +165,7 @@ const styles = StyleSheet.create<Style>({
     flexGrow: 1,
     paddingHorizontal: 20,
     alignItems: 'center',
-    justifyContent: 'center', // Centraliza o conteúdo verticalmente
+    justifyContent: 'center',
     paddingTop: 50,
     paddingBottom: 20,
   },
@@ -187,7 +202,7 @@ const styles = StyleSheet.create<Style>({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
-    elevation: 8, // Sombra para Android
+    elevation: 8,
   },
   label: {
     fontSize: 14,
@@ -215,7 +230,15 @@ const styles = StyleSheet.create<Style>({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 30,
-    marginBottom: 15,
+    marginBottom: 10, // Espaço entre o botão principal e o secundário
+  },
+  secondaryButton: {
+    backgroundColor: colors.success,
+    height: 50,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20, // Espaço antes do link de texto
   },
   buttonText: {
     color: colors.white,
