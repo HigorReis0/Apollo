@@ -18,9 +18,11 @@ import {
 
 // @ts-ignore
 // O TypeScript no editor às vezes não reconhece imagens fora da pasta src.
+// Esse ignore evita o sublinhado vermelho, já que o Metro Bundler carrega a imagem corretamente.
 import telaLogin from '../../assets/homem_sentado_login.png';
 
 // Interface para tipagem dos estilos.
+// Isso garante que o autocomplete funcione e evita erros de digitação nos estilos.
 interface Style {
   safeArea: ViewStyle;
   keyboardAvoidingView: ViewStyle;
@@ -34,28 +36,25 @@ interface Style {
   spacingTop: ViewStyle;
   input: TextStyle;
   button: ViewStyle;
-  secondaryButton: ViewStyle; // Novo estilo para o botão verde
   buttonText: TextStyle;
   forgotPasswordText: TextStyle;
 }
 
 export default function LoginScreen() {
+  // Estados para controlar os inputs do formulário
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Função de Login
+  // Função de Login (Simulação - Front-end Only)
+  // Valida apenas se os campos foram preenchidos para feedback visual.
   const handleLogin = () => {
     if (email && password) {
+      // Em um app real, aqui faríamos a requisição para o Backend.
+      // Como é apenas front-end, mostramos um feedback de sucesso.
       Alert.alert('Sucesso', `Login simulado para: ${email}`);
     } else {
       Alert.alert('Atenção', 'Por favor, preencha e-mail e senha para continuar.');
     }
-  };
-
-  // Função para redirecionar para o Cadastro (Futuramente)
-  const handleSignUpRedirect = () => {
-    Alert.alert('Navegação', 'Indo para a tela de cadastro...');
-    // Futuramente aqui você usará: navigation.navigate('Cadastro')
   };
 
   const handleForgotPassword = () => {
@@ -63,13 +62,17 @@ export default function LoginScreen() {
   };
 
   return (
+    // SafeAreaView: Garante que o conteúdo não fique escondido atrás do "notch" ou barra de status
     <SafeAreaView style={styles.safeArea}>
+      
+      {/* KeyboardAvoidingView: Ajusta a tela automaticamente quando o teclado virtual sobe */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.container}>
           
+          {/* Seção Superior: Identidade Visual */}
           <View style={styles.header}>
             <Text style={styles.titleText}>APOLLO</Text>
             <View style={styles.imageContainer}>
@@ -82,6 +85,7 @@ export default function LoginScreen() {
             </View>
           </View>
 
+          {/* Seção Principal: Formulário */}
           <View style={styles.loginCard}>
             
             <Text style={styles.label}>Email</Text>
@@ -100,27 +104,17 @@ export default function LoginScreen() {
               style={styles.input}
               placeholder="••••••••••"
               placeholderTextColor="#9CA3AF"
-              secureTextEntry
+              secureTextEntry // Oculta os caracteres da senha
               value={password}
               onChangeText={setPassword}
             />
 
-            {/* Botão Entrar (Principal) */}
             <TouchableOpacity
               style={styles.button}
               onPress={handleLogin}
-              activeOpacity={0.8}
+              activeOpacity={0.8} // Efeito visual de clique
             >
               <Text style={styles.buttonText}>Entrar</Text>
-            </TouchableOpacity>
-
-            {/* Botão Cadastrar (Secundário - Verde) */}
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={handleSignUpRedirect}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>Cadastrar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleForgotPassword}>
@@ -134,12 +128,11 @@ export default function LoginScreen() {
   );
 }
 
-// Definição de Cores
+// Definição de Cores para facilitar manutenção futura
 const colors = {
   background: '#F9FAFB',
   cardBackground: '#1F2937',
   primary: '#4F68C4',
-  success: '#10B981', // Verde Esmeralda para o botão de cadastro
   inputBackground: '#FFFFFF',
   white: '#FFFFFF',
   textLight: '#E5E7EB',
@@ -157,7 +150,7 @@ const styles = StyleSheet.create<Style>({
     flexGrow: 1,
     paddingHorizontal: 20,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center', // Centraliza o conteúdo verticalmente
     paddingTop: 50,
     paddingBottom: 20,
   },
@@ -194,7 +187,7 @@ const styles = StyleSheet.create<Style>({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
-    elevation: 8,
+    elevation: 8, // Sombra para Android
   },
   label: {
     fontSize: 14,
@@ -222,16 +215,7 @@ const styles = StyleSheet.create<Style>({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 30,
-    marginBottom: 10, // Reduzi a margem inferior para aproximar do botão de cadastro
-  },
-  // Estilo do botão verde de cadastro
-  secondaryButton: {
-    backgroundColor: colors.success,
-    height: 50,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20, // Espaço antes do link "Esqueceu a senha"
+    marginBottom: 15,
   },
   buttonText: {
     color: colors.white,
