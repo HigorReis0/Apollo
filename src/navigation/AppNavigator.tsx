@@ -1,8 +1,7 @@
 import React from 'react';
-import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
-import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-// Importação das Telas
+// IMPORTAÇÃO DAS TELAS - Verifique se os nomes das pastas estão corretos (Maiúsculas/Minúsculas)
 import LoginScreen from '../screens/Login/tela_login';
 import RegisterScreen from '../screens/Cadastro/tela_cadastro';
 import RecoverPasswordScreen from '../screens/RecuperacaoSenha/recuperacao_senha';
@@ -11,9 +10,14 @@ import HabitsScreen from '../screens/Habitos/tela_habitos';
 import BeberAguaScreen from '../screens/JogosHabitos/BeberAgua/beber_agua';
 import ProfileScreen from '../screens/Perfil/perfil';
 import ReadingScreen from '../screens/JogosHabitos/Ler/ler';
+import MusculacaoScreen from '../screens/JogosHabitos/Musculacao/musculacao';
+import CorridaScreen from '../screens/JogosHabitos/Corrida/corrida';
+import SonoScreen from '../screens/JogosHabitos/SonoRegulado/sono';
+import ArrumarCamaScreen from '../screens/JogosHabitos/ArrumarCama/cama';
 
 import { colors } from '../theme/colors';
 
+// 1. Tipagem das Rotas
 export type RootStackParamList = {
   Login: undefined;
   Cadastro: undefined;
@@ -23,47 +27,38 @@ export type RootStackParamList = {
   BeberAgua: undefined;
   Perfil: undefined;
   Ler: undefined;
+  Musculacao: undefined;
+  Correr: undefined;
+  Sono: undefined;
+  ArrumarCama: undefined;
 };
 
-const Stack = createStackNavigator<RootStackParamList>();
-
-// Configuração de Transição Rápida
-const transitionConfig = {
-  animation: 'timing',
-  config: {
-    duration: 200, // Tempo curto (200ms) para ser ágil
-  },
-};
+// 2. Criação do Stack
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator 
-        initialRouteName="Login"
-        screenOptions={{
-          headerShown: false, 
-          cardStyle: { backgroundColor: colors.background },
-          
-          // Aplica a configuração de velocidade para abrir e fechar telas
-          transitionSpec: {
-            open: transitionConfig as any,
-            close: transitionConfig as any,
-          },
-          
-          // ALTERADO: Agora usamos o estilo de deslizar horizontalmente (padrão iOS)
-          // Isso faz a tela entrar da direita para a esquerda.
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-        }}
-      >
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Cadastro" component={RegisterScreen} />
-        <Stack.Screen name="RecuperacaoSenha" component={RecoverPasswordScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Habitos" component={HabitsScreen} />
-        <Stack.Screen name="BeberAgua" component={BeberAguaScreen} />
-        <Stack.Screen name="Perfil" component={ProfileScreen} />
-        <Stack.Screen name="Ler" component={ReadingScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    // @ts-ignore - Essa linha ignora o erro de 'id' se ele persistir por causa de versão
+    <Stack.Navigator 
+      initialRouteName="Login"
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+        animation: 'slide_from_right',
+      }}
+    >
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Cadastro" component={RegisterScreen} />
+      <Stack.Screen name="RecuperacaoSenha" component={RecoverPasswordScreen} />
+      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="Habitos" component={HabitsScreen} />
+      <Stack.Screen name="BeberAgua" component={BeberAguaScreen} />
+      <Stack.Screen name="Perfil" component={ProfileScreen} />
+      <Stack.Screen name="Ler" component={ReadingScreen} />
+      <Stack.Screen name="Musculacao" component={MusculacaoScreen} />
+      <Stack.Screen name="Correr" component={CorridaScreen} />
+      <Stack.Screen name="Sono" component={SonoScreen} />
+      <Stack.Screen name="ArrumarCama" component={ArrumarCamaScreen} />
+    </Stack.Navigator>
   );
 }

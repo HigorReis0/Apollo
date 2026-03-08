@@ -1,23 +1,30 @@
-import React from 'react';
+// Importa o React, fundamental para componentes funcionais.
+import React, { useState } from 'react'; // "useState" usado para controlar se o Modal de detalhes do hábito está aberto ou não.
+// Importa componentes do React Native.
 import {
-  View,
-  Text,
-  Image,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  TouchableOpacity,
-  Alert,
+  View, // Container básico.
+  Text, // Exibição de texto.
+  Image, // Exibição de imagens.
+  SafeAreaView, // Área segura.
+  ScrollView, // Rolagem.
+  StatusBar, // Controle da barra de status.
+  TouchableOpacity, // Botão com opacidade.
+  Alert, // Popups nativos.
+  Modal, // Adicionado para a janela de novo hábito.
+  TextInput, // Adicionado para capturar o nome do hábito.
 } from 'react-native';
+// Hooks e tipos para navegação.
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+// Definição das rotas.
 import { RootStackParamList } from '../../navigation/AppNavigator';
+// Estilos específicos desta tela.
 import { styles } from './tela_habitos.styles';
 
-// IMPORTANTE: Importando o Header reutilizável
+// Importa o cabeçalho reutilizável.
 import { Header } from '../../components/Header';
 
-// --- Importação das Imagens ---
+// --- Importação das Imagens dos Hábitos (TS Ignore para facilitar importação direta) ---
 // @ts-ignore
 import imgLeitura from '../../../assets/leitura.png';
 // @ts-ignore
@@ -37,12 +44,18 @@ import imgDentes from '../../../assets/dentes.png';
 // @ts-ignore
 import imgRotina from '../../../assets/rotina.png';
 
+// Define o tipo de navegação específico para esta tela.
 type HabitsScreenProp = StackNavigationProp<RootStackParamList, 'Habitos'>;
 
 export default function HabitsScreen() {
+  // Inicializa o hook de navegação.
   const navigation = useNavigation<HabitsScreenProp>();
-  
-  const habitsList = [
+
+  const [modalVisible, setModalVisible] = useState(false); // Controla a visibilidade do Modal de detalhes do hábito.
+  const [newHabitName, setNewHabitName] = useState(''); // Armazena o nome do novo hábito a ser adicionado.
+
+  // Lista de dados dos hábitos transformada em ESTADO para permitir a adição dinâmica de novos cards.
+  const [habits, setHabits] = useState([
     {
       id: 3,
       title: "Beber Água",
@@ -97,40 +110,95 @@ export default function HabitsScreen() {
       image: imgRotina,
       text: "Planejar o dia seguinte antes de dormir reduz a ansiedade matinal e melhora a qualidade do sono."
     }
-  ];
+  ]);
 
+  // Função para lidar com o clique em um hábito.
   const handleHabitPress = (habitTitle: string) => {
+    // Redireciona para telas específicas se o hábito já foi implementado.
     if (habitTitle === "Beber Água") {
       navigation.navigate('BeberAgua');
     } else if (habitTitle === "Leitura") {
-      // Nova Navegação
       navigation.navigate('Ler');
-    } else {
+    } 
+    // NOVO: Adicionado redirecionamento para a tela de musculação recém-criada.
+    else if (habitTitle === "Musculação") {
+      navigation.navigate('Musculacao');
+    }
+    else if (habitTitle === "Correr") {
+      navigation.navigate('Correr');
+    }
+    else if (habitTitle === "Sono Regulado") {
+      navigation.navigate('Sono');
+    }
+    else {
+      // Caso contrário, mostra um alerta informando que será implementado em breve.
       Alert.alert("Em Breve", `A funcionalidade de ${habitTitle} estará disponível em breve!`);
     }
   };
 
+  // Função para salvar o novo hábito digitado pelo usuário.
+  const handleSaveNewHabit = () => {
+    if (newHabitName.trim() === '') {
+      Alert.alert("Aviso", "Por favor, digite o nome do hábito.");
+      return;
+    }
+
+    // Cria o novo objeto seguindo a estrutura da classe de hábitos.
+    const newHabitObj = {
+      id: Date.now(), // Gera um ID único baseado no tempo.
+      title: newHabitName,
+      image: imgRotina, // Define o ícone de rotina como padrão para novos hábitos.
+      text: "Hábito personalizado focado em sua evolução diária no Apollo."
+    };
+
+    // Atualiza a lista de hábitos (adiciona o novo no TOPO e mantém os anteriores abaixo).
+    setHabits([newHabitObj, ...habits]);
+    setNewHabitName(''); // Limpa o campo de texto.
+    setModalVisible(false); // Fecha o modal.
+    
+    Alert.alert("Sucesso!", `Hábito "${newHabitName}" adicionado.`);
+  };
+
   return (
+    // Área segura da tela.
     <SafeAreaView style={styles.safeArea}>
+      {/* Barra de status configurada. */}
       <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+      
+      {/* ScrollView para listar todos os hábitos. */}
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         
+        {/* Cabeçalho reutilizável com menu. */}
         <Header />
 
-        {/* Lista de Cards */}
-        {habitsList.map((habit) => (
+        {/* Card Botão para Adicionar Novo Hábito (Posicionado no TOPO para melhor UX). */}
+        <TouchableOpacity 
+          style={styles.addCard} 
+          onPress={() => setModalVisible(true)}
+          activeOpacity={0.7}
+        >
+          <View style={{ alignItems: 'center' }}>
+            <Text style={styles.addCardTitle}>+ Criar Hábito Personalizado</Text>
+            <Text style={styles.addCardSub}>Defina suas próprias metas</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Mapeamento da lista de hábitos para criar os cartões. */}
+        {habits.map((habit) => (
           <TouchableOpacity 
-            key={habit.id} 
-            style={styles.card}
-            activeOpacity={0.9} 
-            onPress={() => handleHabitPress(habit.title)}
+            key={habit.id} // Chave única para o React identificar o item na lista.
+            style={styles.card} // Estilo do cartão.
+            activeOpacity={0.9} // Opacidade ao clicar.
+            onPress={() => handleHabitPress(habit.title)} // Chama a função de clique.
           >
+            {/* Imagem do hábito. */}
             <Image 
               source={habit.image} 
               style={styles.cardImage} 
               resizeMode="contain" 
             />
             
+            {/* Conteúdo textual do cartão. */}
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>{habit.title}</Text>
               <Text style={styles.cardText}>
@@ -138,11 +206,51 @@ export default function HabitsScreen() {
               </Text>
             </View>
             
+            {/* Elemento decorativo visual no canto do cartão (definido no estilo). */}
             <View style={styles.decorativeCurve} /> 
           </TouchableOpacity>
         ))}
 
       </ScrollView>
+
+      {/* Modal para inserção do nome do novo hábito. */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeader}>Novo Hábito</Text>
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Qual seu objetivo?"
+              placeholderTextColor="#999"
+              value={newHabitName}
+              onChangeText={setNewHabitName}
+              autoFocus={true}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.btn, styles.btnCancel]} 
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.btnText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.btn, styles.btnSave]} 
+                onPress={handleSaveNewHabit}
+              >
+                <Text style={styles.btnText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
