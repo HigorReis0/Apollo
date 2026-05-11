@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // IMPORTAÇÃO DAS TELAS - Verifique se os nomes das pastas estão corretos (Maiúsculas/Minúsculas)
 import LoginScreen from '../screens/Login/tela_login';
-import RegisterScreen from '../screens/Cadastro/tela_cadastro';
+import RegisterScreen from '../screens/Cadastro';
 import RecoverPasswordScreen from '../screens/RecuperacaoSenha/recuperacao_senha';
 import HomeScreen from '../screens/Home/tela_inicial';
 import HabitsScreen from '../screens/Habitos/tela_habitos';
