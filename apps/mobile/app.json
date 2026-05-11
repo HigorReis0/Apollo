@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "projeto-praticando",
+    "slug": "projeto-praticando",
+    "owner": "higorreis",
+    "scheme": "projeto-praticando",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.higorreis.projetopraticando"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.higorreis.projetopraticando"
+    },
+    "plugins": [
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a2519c5c-c945-4a36-8b43-8a2ac2039eba"
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+# --- Dependências e Gerenciamento ---
+node_modules/
+.pnpm-debug.log
+.npm
+package-lock.json
+yarn.lock
+
+# --- Segurança (Zero Trust) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Mobile (Expo/React Native) ---
+.expo/
+dist/
+web-build/
+*.jks
+*.p12
+*.key
+*.mobileprovision
+
+# --- Back-end (API/Node) ---
+build/
+dist/
+uploads/
+debug.log
+
+# --- Build & Cache (Turborepo/IDE) ---
+.turbo/
+.cache/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
