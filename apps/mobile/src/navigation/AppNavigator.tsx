@@ -7,7 +7,7 @@ import RegisterScreen from '../screens/Cadastro';
 import RecoverPasswordScreen from '../screens/RecuperacaoSenha/recuperacao_senha';
 import HomeScreen from '../screens/Home/tela_inicial';
 import HabitsScreen from '../screens/Habitos/tela_habitos';
-import BeberAguaScreen from '../screens/JogosHabitos/BeberAgua/beber_agua';
+import BeberAguaScreen from '../screens/JogosHabitos/BeberAgua';
 import ProfileScreen from '../screens/Perfil/perfil';
 import ReadingScreen from '../screens/JogosHabitos/Ler/ler';
 
