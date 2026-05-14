@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "projeto-praticando",
-    "slug": "projeto-praticando",
+    "name": "Apollo",
+    "slug": "apollo",
     "owner": "higorreis",
-    "scheme": "projeto-praticando",
+    "scheme": "apollo",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
