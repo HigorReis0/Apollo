@@ -9,7 +9,7 @@ import HomeScreen from '../screens/Home/tela_inicial';
 import HabitsScreen from '../screens/Habitos/tela_habitos';
 import BeberAguaScreen from '../screens/JogosHabitos/BeberAgua';
 import ProfileScreen from '../screens/Perfil/perfil';
-import ReadingScreen from '../screens/JogosHabitos/Ler/ler';
+import ReadingScreen from '../screens/JogosHabitos/Ler';
 
 import { colors } from '../theme/colors';
 
