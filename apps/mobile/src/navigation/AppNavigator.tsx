@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/Login';
 import RegisterScreen from '../screens/Cadastro';
 import RecoverPasswordScreen from '../screens/RecuperacaoSenha/recuperacao_senha';
-import HomeScreen from '../screens/Home/tela_inicial';
+import HomeScreen from '../screens/Home';
 import HabitsScreen from '../screens/Habitos/tela_habitos';
 import BeberAguaScreen from '../screens/JogosHabitos/BeberAgua';
 import ProfileScreen from '../screens/Perfil/perfil';
