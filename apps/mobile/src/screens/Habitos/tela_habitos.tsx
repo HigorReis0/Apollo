@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 // Hooks e tipos para navegação.
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 // Definição das rotas.
 import { RootStackParamList } from '../../navigation/AppNavigator';
 // Estilos específicos desta tela.
@@ -43,7 +43,7 @@ import imgDentes from '../../../assets/dentes.png';
 import imgRotina from '../../../assets/rotina.png';
 
 // Define o tipo de navegação específico para esta tela.
-type HabitsScreenProp = StackNavigationProp<RootStackParamList, 'Habitos'>;
+type HabitsScreenProp = NativeStackNavigationProp<RootStackParamList, 'Habitos'>;
 
 export default function HabitsScreen() {
   // Inicializa o hook de navegação.
@@ -115,6 +115,20 @@ export default function HabitsScreen() {
       navigation.navigate('BeberAgua');
     } else if (habitTitle === "Leitura") {
       navigation.navigate('Ler');
+    } else if (habitTitle === "Meditar") {
+      navigation.navigate('Meditar');
+    } else if (habitTitle === "Montar Rotina") {
+      navigation.navigate('MontarRotina');
+    } else if (habitTitle === "Musculação") {
+      navigation.navigate('Musculacao');
+    } else if (habitTitle === "Saúde Bucal") {
+      navigation.navigate('SaudeBucal');
+    } else if (habitTitle === "Sono Regulado") {
+      navigation.navigate('SonoRegulado');
+    } else if (habitTitle === "Correr") {
+      navigation.navigate('Corrida');
+    } else if (habitTitle === "Arrumar a Cama") {
+      navigation.navigate('ArrumarCama');
     } else {
       // Caso contrário, mostra um alerta informando que será implementado em breve.
       Alert.alert("Em Breve", `A funcionalidade de ${habitTitle} estará disponível em breve!`);
