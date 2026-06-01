@@ -4,8 +4,7 @@ const xpLogController = require("../controllers/xpLogController");
 
 // Middlewares de Autenticação (Ajuste o caminho conforme o seu projeto)
 // Presumo que você tenha um middleware de validação JWT, como no seu UsuarioController
-const verificarToken = require("../middlewares/authMiddleware"); 
-
+const verificarToken = require("../middlewares/auth");
 /* #################### -> ROTAS DE XP LOG <- #################### */
 
 // REGISTRAR XP (Requer validação de segurança para evitar injeção de pontos)
