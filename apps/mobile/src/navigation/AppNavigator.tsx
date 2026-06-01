@@ -46,7 +46,7 @@ export default function AppNavigator() {
   return (
     // @ts-ignore - Essa linha ignora o erro de 'id' se ele persistir por causa de versão
     <Stack.Navigator 
-      initialRouteName="Login"
+      initialRouteName="Home"
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },

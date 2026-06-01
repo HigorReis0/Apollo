@@ -19,14 +19,14 @@ export const useMeditar = () => {
       }, 1000);
     } else if (tempoRestante === 0 && isAtivo) {
       setIsAtivo(false);
-      Alert.alert("🧘 Mente em Paz", "Sua sessão de meditação foi concluída com sucesso! +100 XP");
+      Alert.alert("Mente em Paz", "Sua sessão de meditação foi concluída com sucesso! +100 XP");
     }
 
     // Limpa o intervalo ao desmontar o componente ou pausar.
     return () => clearInterval(intervalo);
   }, [isAtivo, tempoRestante]);
 
-  // Função para formatar os segundos no padrão MM:SS (ex: 05:00).
+  // Função para formatar os segundos no padrão minuto/segundo.
   const formatarTempo = (segundos: number) => {
     const mins = Math.floor(segundos / 60);
     const segs = segundos % 60;
