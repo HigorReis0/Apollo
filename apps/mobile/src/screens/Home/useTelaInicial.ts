@@ -40,7 +40,12 @@ export const useTelaInicial = () => {
       navigation.navigate('BeberAgua');
     } else if (habitLabel === 'Leitura') {
       navigation.navigate('Ler');
-    } else {
+    } else if (habitLabel === 'Musculação') {
+      navigation.navigate('Musculacao');
+    } else if (habitLabel === 'Correr') {
+      navigation.navigate('Corrida');
+    }
+    else {
       Alert.alert('Em Breve', `A funcionalidade de ${habitLabel} estará disponível em breve!`);
     }
   };
