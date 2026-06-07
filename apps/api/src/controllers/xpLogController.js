@@ -8,24 +8,22 @@ const Usuario = require("../models/Usuario");
 module.exports = {
 
   // ========= CREATE (REGISTRAR NOVO EVENTO DE XP) =========
-  // Operação idempotente e atômica.
   async registrar(req, res) {
     try {
-      const { usuario_id, valor_xp, motivo } = req.body;
+      // Extrai o ID protegido do Token (req.usuarioId) e os dados do body
+      const usuario_id = req.usuarioId; 
+      const { valor_xp, motivo } = req.body;
 
-      // Validação de Integridade de Dados (Fail-Fast Principle)
       if (!usuario_id || valor_xp === undefined || !motivo) {
-        return res.status(400).json({ erro: "Dados insuficientes (Requer: usuario_id, valor_xp, motivo)." });
+        return res.status(400).json({ erro: "Dados insuficientes (Requer: valor_xp, motivo no body e Token válido)." });
       }
 
-      // Valida se o usuário existe (Evita violação de Foreign Key no BD)
       const usuarioExiste = await Usuario.findByPk(usuario_id);
       if (!usuarioExiste) {
         return res.status(404).json({ erro: "Usuário não encontrado." });
       }
 
       const log = await XpLog.create({ usuario_id, valor_xp, motivo });
-      
       return res.status(201).json(log);
     } catch (error) {
       return res.status(500).json({ erro: error.message });
@@ -33,17 +31,19 @@ module.exports = {
   },
 
   // ========= LISTAR LOGS DE UM USUÁRIO (COM PAGINAÇÃO) =========
-  // Abordagem otimizada para evitar sobrecarga de memória (Memory Leak) em históricos longos
   async listarPorUsuario(req, res) {
     try {
-      const { usuario_id } = req.params;
-      const limite = parseInt(req.query.limite) || 20; // Padrão de 20 registros
+      // Extrai da requisição autenticada, ignorando req.params
+      const usuario_id = req.usuarioId;
+      if (!usuario_id) return res.status(401).json({ erro: "Acesso não autorizado." });
+
+      const limite = parseInt(req.query.limite) || 20; 
       const pagina = parseInt(req.query.pagina) || 1;
       const offset = (pagina - 1) * limite;
 
       const logs = await XpLog.findAndCountAll({
         where: { usuario_id },
-        order: [['data_registro', 'DESC']], // Ordem cronológica reversa
+        order: [['data_registro', 'DESC']], 
         limit: limite,
         offset: offset
       });
@@ -60,11 +60,12 @@ module.exports = {
   },
 
   // ========= CÁLCULO DE SALDO TOTAL (AGGREGATION) =========
-  // Calcula o XP atual do usuário em tempo de execução.
-  // Baseia-se no conceito de "Single Source of Truth", reduzindo anomalias de atualização.
   async calcularSaldo(req, res) {
     try {
-      const { usuario_id } = req.params;
+      // PONTO DO ERRO 500: Agora lemos o req.usuarioId do auth.js
+      const usuario_id = req.usuarioId;
+
+      if (!usuario_id) return res.status(401).json({ erro: "Acesso não autorizado." });
 
       const saldo = await XpLog.sum('valor_xp', {
         where: { usuario_id }
@@ -72,15 +73,14 @@ module.exports = {
 
       return res.json({ 
         usuario_id, 
-        xp_total: saldo || 0 // Retorna 0 caso sum retorne null
+        xp_total: saldo || 0 
       });
     } catch (error) {
       return res.status(500).json({ erro: error.message });
     }
   },
 
-  // ========= DELETE (APENAS PARA ADMINISTRAÇÃO/CORREÇÃO) =========
-  // Utilizado apenas para rollback de inconsistências, seguindo políticas de Zero Trust.
+  // ========= DELETE =========
   async deletar(req, res) {
     try {
       const { id } = req.params;
