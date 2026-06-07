@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
-import { api } from '../../../../services/api';
+import { api } from '../../../services/api';
 
 export interface DrinkType {
   label: string;
