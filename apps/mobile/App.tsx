@@ -1,13 +1,17 @@
 import React from 'react';
 import 'react-native-gesture-handler'; 
-import { NavigationContainer } from '@react-navigation/native'; // Verifique se importou isso
+import { NavigationContainer } from '@react-navigation/native';
+// 1. Importe o Provider aqui
+import { SafeAreaProvider } from 'react-native-safe-area-context'; 
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
   return (
-    // Se o NavigationContainer não estiver aqui (ou dentro do AppNavigator), o app explode no celular
-    <NavigationContainer>
-      <AppNavigator />
-    </NavigationContainer>
+    // 2. Englobe toda a navegação com o Provider
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <AppNavigator />
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }

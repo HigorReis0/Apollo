@@ -1,48 +1,50 @@
-import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-/**
- * Endereço IP da sua máquina na rede local.
- */
 export const API_URL = "http://192.168.1.44:3000";
 
-// Objeto cliente utilizando a API nativa Fetch do Expo
+// Função utilitária seguindo o Clean Code para evitar repetição
+const getAuthHeaders = async () => {
+  const token = await AsyncStorage.getItem('@Apollo:token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+};
+
 export const api = {
   async get(endpoint: string) {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {
-        throw new Error(`Erro HTTP GET: ${response.status}`);
+        throw new Error(`HTTP Error GET: ${response.status}`);
       }
       return { data: await response.json() };
     } catch (error) {
-      // Impede o crash da aplicação interceptando o erro de rede (I/O)
-      console.error(`[API CLIENT ERROR] Falha de comunicação em GET ${endpoint}:`, error);
-      throw error; 
+      console.error(`[NETWORK CLIENT ERROR] Falha na requisição GET ${endpoint}:`, error);
+      throw error;
     }
   },
 
   async post(endpoint: string, body: any) {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(body),
       });
 
       if (!response.ok) {
-        throw new Error(`Erro HTTP POST: ${response.status}`);
+        throw new Error(`HTTP Error POST: ${response.status}`);
       }
       return { data: await response.json() };
     } catch (error) {
-      console.error(`[API CLIENT ERROR] Falha de comunicação em POST ${endpoint}:`, error);
+      console.error(`[NETWORK CLIENT ERROR] Falha na requisição POST ${endpoint}:`, error);
       throw error;
     }
   }

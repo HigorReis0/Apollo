@@ -9,9 +9,9 @@ sequelize.authenticate()
   .then(() => {
     console.log("Banco conectado com sucesso");
     
-    // AJUSTE: Adicionado '0.0.0.0' para abrir a escuta do Express para a sua rede local (Intranet)
+    // Configura explicitamente o Host para '0.0.0.0' para expor a API à rede local (Intranet)
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Servidor rodando na porta ${PORT} e aberto para a rede local!`);
+      console.log(`Servidor rodando na porta ${PORT} e aberto para requisições externas!`);
     });
   })
   .catch((err) => {
