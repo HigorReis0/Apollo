@@ -9,9 +9,8 @@ import HomeScreen from '../screens/Home';
 import HabitsScreen from '../screens/Habitos/tela_habitos';
 import BeberAguaScreen from '../screens/JogosHabitos/BeberAgua';
 import ProfileScreen from '../screens/Perfil';
-import ReadingScreen from '../screens/JogosHabitos/Ler';
-
 import { colors } from '../theme/colors';
+import ReadingScreen from '../screens/JogosHabitos/Ler';
 import SonoScreen from '../screens/JogosHabitos/SonoRegulado';
 import MeditarScreen from '../screens/JogosHabitos/Meditar';
 import MontarRotinaScreen from '../screens/JogosHabitos/MontarRotina';
