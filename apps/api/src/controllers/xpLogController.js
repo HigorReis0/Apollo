@@ -2,6 +2,7 @@
 
 const XpLog = require("../models/XpLog");
 const Usuario = require("../models/Usuario");
+const Motivo = require("../models/Motivo");
 
 /* #################### -> INÍCIO DO MÓDULO DE EXPORTAÇÃO <- #################### */
 
@@ -9,22 +10,36 @@ module.exports = {
 
   // ========= CREATE (REGISTRAR NOVO EVENTO DE XP) =========
   async registrar(req, res) {
-    try {
-      // Extrai o ID protegido do Token (req.usuarioId) e os dados do body
-      const usuario_id = req.usuarioId; 
-      const { valor_xp, motivo } = req.body;
+  try {
+    const usuario_id = req.usuarioId;
+    const { id_motivo } = req.body;
 
-      if (!usuario_id || valor_xp === undefined || !motivo) {
-        return res.status(400).json({ erro: "Dados insuficientes (Requer: valor_xp, motivo no body e Token válido)." });
-      }
+    // Valida se os dados necessários foram enviados
+    if (!usuario_id || !id_motivo) {
+      return res.status(400).json({ erro: "Dados insuficientes (Requer: id_motivo no body e Token válido)." });
+    }
 
-      const usuarioExiste = await Usuario.findByPk(usuario_id);
-      if (!usuarioExiste) {
-        return res.status(404).json({ erro: "Usuário não encontrado." });
-      }
+    // Verifica se o usuário existe
+    const usuarioExiste = await Usuario.findByPk(usuario_id);
+    if (!usuarioExiste) {
+      return res.status(404).json({ erro: "Usuário não encontrado." });
+    }
 
-      const log = await XpLog.create({ usuario_id, valor_xp, motivo });
-      return res.status(201).json(log);
+    // Busca o motivo no banco para obter o xp_padrao e o nome
+    const motivoEncontrado = await Motivo.findByPk(id_motivo);
+    if (!motivoEncontrado) {
+      return res.status(404).json({ erro: "Motivo de XP não encontrado." });
+    }
+
+    // Cria o log usando os valores vindos do banco, não do frontend
+    const log = await XpLog.create({
+      usuario_id,
+      id_motivo,
+      valor_xp: motivoEncontrado.xp_padrao,
+      motivo: motivoEncontrado.nome_motivo
+    });
+
+    return res.status(201).json(log);
     } catch (error) {
       return res.status(500).json({ erro: error.message });
     }

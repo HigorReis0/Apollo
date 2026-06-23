@@ -26,13 +26,22 @@ const XpLog = sequelize.define(
       onDelete: 'CASCADE' // Integridade referencial: se o usuário sumir, os logs somem
     },
 
+    // Descrição da ação que gerou o XP (ex: "Bebeu 2L de água")
+    id_motivo: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'tab_motivo', // Refere-se fisicamente à tabela no banco
+        key: 'motivo_id'
+      },
+    },
+
     // Quantidade de XP transacionada (pode ser positiva para ganhos ou negativa para penalidades)
     valor_xp: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
 
-    // Descrição da ação que gerou o XP (ex: "Bebeu 2L de água")
     motivo: {
       type: DataTypes.STRING(255),
       allowNull: false,
