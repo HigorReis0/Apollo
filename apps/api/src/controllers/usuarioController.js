@@ -161,6 +161,28 @@ module.exports = {
     }
   },
 
+  // ========= PERFIL DO USUÁRIO LOGADO =========
+async perfil(req, res) {
+  try {
+    const usuarioId = req.usuarioId; // Vem do middleware auth
+    const usuario = await Usuario.findByPk(usuarioId, {
+      attributes: { exclude: ["senha"] }
+    });
+    if (!usuario) {
+      return res.status(404).json({ erro: "Usuário não encontrado" });
+    }
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const user = usuario.toJSON();
+    if (user.avatar_url && !user.avatar_url.startsWith("http")) {
+      user.avatar_url = `${baseUrl}${user.avatar_url}`;
+    }
+    return res.json(user);
+  } catch (error) {
+    return res.status(500).json({ erro: error.message });
+  }
+},
+
   // ========= DELETE =========
   async deletar(req, res) {
     try {

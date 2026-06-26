@@ -1,14 +1,6 @@
-// Importa DataTypes para tipagem rigorosa das colunas (Sequelize ORM)
 const { DataTypes } = require("sequelize");
-// Conexão Singleton com o banco — Padrão de Projeto GoF (Gamma et al., 1994)
 const sequelize = require("../config/database");
 
-// ============================================================
-// MODEL: Leitura
-// Representa a tabela 'tab_leitura' no PostgreSQL.
-// Mapeamento Objeto-Relacional via Sequelize ORM —
-// abstração da camada de persistência (Fowler, 2002).
-// ============================================================
 const Leitura = sequelize.define(
   "Leitura",
   {
@@ -16,48 +8,48 @@ const Leitura = sequelize.define(
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+      field: "id_leitura"
     },
-
-    // Foreign Key — integridade referencial com tab_usuario
+    id_livro_lido: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "tab_livros_lidos",
+        key: "id_livro_lido"
+      },
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE"
+    },
     usuario_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
-        model: 'tab_usuario',
-        key: 'usuario_id'
+        model: "tab_usuario",
+        key: "usuario_id"
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE' // Ao deletar usuário, remove seus registros de leitura
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE"
     },
-
-    // Nome do livro lido
-    nome_livro: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-
-    // Quantidade de páginas lidas na sessão
-    paginas_lidas: {
+    pag_lidas: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: "pag_lidas"
     },
-
-    // Nota/observação opcional sobre a leitura
-    nota: {
-      type: DataTypes.TEXT,
+    nota_leitura: {
+      type: DataTypes.INTEGER,
       allowNull: true,
+      field: "nota_leitura"
     },
-
-    // Timestamp do registro — Time-Series Data para análise futura
-    data_registro: {
+    data_hora: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
       defaultValue: DataTypes.NOW,
+      field: "data_hora"
     }
   },
   {
     tableName: "tab_leitura",
-    timestamps: false, // Gerenciado manualmente via data_registro
+    timestamps: false, // O PostgreSQL controla a inserção de datas de forma nativa nesta tabela
   }
 );
 

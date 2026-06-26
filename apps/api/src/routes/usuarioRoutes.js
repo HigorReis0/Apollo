@@ -17,6 +17,7 @@ routes.post("/login-google", usuarioController.loginGoogle);
  * --- ROTAS PRIVADAS (PROTEGIDAS) ---
  */
 // O authMiddleware garante que só usuários logados acessem estas rotas
+routes.get("/perfil", authMiddleware, usuarioController.perfil);
 routes.get("/", authMiddleware, usuarioController.listar);
 routes.get("/:id", authMiddleware, usuarioController.buscarPorId);
 routes.put("/:id", authMiddleware, upload.single("avatar"), usuarioController.atualizar);

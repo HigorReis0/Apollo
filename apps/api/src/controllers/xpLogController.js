@@ -1,115 +1,139 @@
-/* #################### -> IMPORTAÇÕES E CONFIGS INICIAIS <- #################### */
-
 const XpLog = require("../models/XpLog");
 const Usuario = require("../models/Usuario");
 const Motivo = require("../models/Motivo");
 
-/* #################### -> INÍCIO DO MÓDULO DE EXPORTAÇÃO <- #################### */
-
+// ============================================================
+// CONTROLLER: xpLogController
+// Camada de controle do padrão MVC responsável pela
+// gamificação — registra, consulta e gerencia o XP dos
+// usuários. Segue o princípio Fail Fast (Shore, 2004):
+// valida entradas antes de qualquer operação no banco.
+// ============================================================
 module.exports = {
 
-  // ========= CREATE (REGISTRAR NOVO EVENTO DE XP) =========
+  // ========= REGISTRAR XP =========
+  // Recebe id_motivo do frontend, busca o xp_padrao no banco
+  // e cria o log — o cliente NUNCA define o valor do XP
+  // (Security by Design / Zero Trust Architecture)
   async registrar(req, res) {
+    try {
+      const usuario_id = req.usuarioId; // injetado pelo authMiddleware
+      const { id_motivo } = req.body;
+
+      // Validação Fail Fast — rejeita antes de tocar o banco
+      if (!usuario_id || !id_motivo) {
+        return res.status(400).json({
+          erro: "Dados insuficientes (id_motivo no body e Token válido são obrigatórios)."
+        });
+      }
+
+      // Verifica existência do usuário — integridade referencial
+      const usuarioExiste = await Usuario.findByPk(usuario_id);
+      if (!usuarioExiste) {
+        return res.status(404).json({ erro: "Usuário não encontrado." });
+      }
+
+      // Busca o motivo no banco para obter o xp_padrao
+      // O servidor decide o valor — nunca o cliente
+      const motivoEncontrado = await Motivo.findByPk(id_motivo);
+      if (!motivoEncontrado) {
+        return res.status(404).json({
+          erro: "Motivo de XP não encontrado. Verifique a tabela tab_motivo."
+        });
+      }
+
+      // Cria o registro usando xp_ganho (nome real da coluna no banco)
+      const log = await XpLog.create({
+        usuario_id,
+        id_motivo: motivoEncontrado.motivo_id,
+        xp_ganho: motivoEncontrado.xp_padrao, // valor vem do banco, não do frontend
+      });
+
+      return res.status(201).json(log);
+
+    } catch (error) {
+      return res.status(500).json({ erro: error.message });
+    }
+  },
+
+  // ========= CALCULAR SALDO DE XP COM NÍVEL =========
+async calcularSaldo(req, res) {
   try {
-    const usuario_id = req.usuarioId;
-    const { id_motivo } = req.body;
+    const usuarioId = req.usuarioId; // Vem do middleware auth
 
-    // Valida se os dados necessários foram enviados
-    if (!usuario_id || !id_motivo) {
-      return res.status(400).json({ erro: "Dados insuficientes (Requer: id_motivo no body e Token válido)." });
-    }
+    // 1. Soma total de XP
+    const totalXp = await XpLog.sum('xp_ganho', {
+      where: { usuario_id: usuarioId }
+    }) || 0;
 
-    // Verifica se o usuário existe
-    const usuarioExiste = await Usuario.findByPk(usuario_id);
-    if (!usuarioExiste) {
-      return res.status(404).json({ erro: "Usuário não encontrado." });
-    }
+    // 2. Buscar modelo Nivel (precisa ser importado)
+    const Nivel = require('../models/Nivel');
+    const { Op } = require('sequelize');
 
-    // Busca o motivo no banco para obter o xp_padrao e o nome
-    const motivoEncontrado = await Motivo.findByPk(id_motivo);
-    if (!motivoEncontrado) {
-      return res.status(404).json({ erro: "Motivo de XP não encontrado." });
-    }
-
-    // Cria o log usando os valores vindos do banco, não do frontend
-    const log = await XpLog.create({
-      usuario_id,
-      id_motivo,
-      valor_xp: motivoEncontrado.xp_padrao,
-      motivo: motivoEncontrado.nome_motivo
+    // 3. Nível atual (maior xp_minimo <= totalXp)
+    const nivelAtual = await Nivel.findOne({
+      where: {
+        xp_minimo: { [Op.lte]: totalXp }
+      },
+      order: [['xp_minimo', 'DESC']],
+      attributes: ['nivel_id', 'nome_nivel', 'xp_minimo']
     });
 
-    return res.status(201).json(log);
-    } catch (error) {
-      return res.status(500).json({ erro: error.message });
-    }
-  },
+    // 4. Próximo nível (menor xp_minimo > totalXp)
+    const proximoNivel = await Nivel.findOne({
+      where: {
+        xp_minimo: { [Op.gt]: totalXp }
+      },
+      order: [['xp_minimo', 'ASC']],
+      attributes: ['xp_minimo']
+    });
 
-  // ========= LISTAR LOGS DE UM USUÁRIO (COM PAGINAÇÃO) =========
+    return res.json({
+      total_xp: totalXp,
+      nivel_atual: nivelAtual ? nivelAtual.nome_nivel : 'Iniciante',
+      nivel_id: nivelAtual ? nivelAtual.nivel_id : null,
+      xp_proximo_nivel: proximoNivel ? proximoNivel.xp_minimo : null
+    });
+
+  } catch (error) {
+    console.error('Erro ao calcular saldo:', error);
+    return res.status(500).json({ erro: error.message });
+  }
+},
+
+  // ========= HISTÓRICO PAGINADO =========
+  // Retorna os logs ordenados do mais recente para o mais antigo
   async listarPorUsuario(req, res) {
     try {
-      // Extrai da requisição autenticada, ignorando req.params
-      const usuario_id = req.usuarioId;
-      if (!usuario_id) return res.status(401).json({ erro: "Acesso não autorizado." });
+      const { usuario_id } = req.params;
 
-      const limite = parseInt(req.query.limite) || 20; 
-      const pagina = parseInt(req.query.pagina) || 1;
-      const offset = (pagina - 1) * limite;
-
-      const logs = await XpLog.findAndCountAll({
+      const logs = await XpLog.findAll({
         where: { usuario_id },
-        order: [['data_registro', 'DESC']], 
-        limit: limite,
-        offset: offset
+        order: [["data_hora", "DESC"]], // Time-Series: mais recente primeiro
       });
 
-      return res.json({
-        total_registros: logs.count,
-        total_paginas: Math.ceil(logs.count / limite),
-        pagina_atual: pagina,
-        dados: logs.rows
-      });
+      return res.json(logs);
+
     } catch (error) {
       return res.status(500).json({ erro: error.message });
     }
   },
 
-  // ========= CÁLCULO DE SALDO TOTAL (AGGREGATION) =========
-  async calcularSaldo(req, res) {
-    try {
-      // PONTO DO ERRO 500: Agora lemos o req.usuarioId do auth.js
-      const usuario_id = req.usuarioId;
-
-      if (!usuario_id) return res.status(401).json({ erro: "Acesso não autorizado." });
-
-      const saldo = await XpLog.sum('valor_xp', {
-        where: { usuario_id }
-      });
-
-      return res.json({ 
-        usuario_id, 
-        xp_total: saldo || 0 
-      });
-    } catch (error) {
-      return res.status(500).json({ erro: error.message });
-    }
-  },
-
-  // ========= DELETE =========
+  // ========= DELETAR LOG =========
   async deletar(req, res) {
     try {
       const { id } = req.params;
-      
+
       const log = await XpLog.findByPk(id);
       if (!log) {
-        return res.status(404).json({ erro: "Log de XP não encontrado." });
+        return res.status(404).json({ erro: "Log não encontrado." });
       }
 
       await log.destroy();
-      return res.json({ sucesso: true, mensagem: "Registro de XP revertido com sucesso." });
+      return res.status(200).json({ mensagem: "Log removido com sucesso." });
+
     } catch (error) {
       return res.status(500).json({ erro: error.message });
     }
   }
-
 };

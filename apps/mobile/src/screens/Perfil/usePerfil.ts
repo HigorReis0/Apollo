@@ -1,83 +1,108 @@
-import { useState, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 
-// Interface que espelha os dados do usuário vindos do backend
-export interface UsuarioDados {
+// --- Importação das Imagens (todas no topo, como exige o JavaScript) ---
+// @ts-ignore
+import imgLeitura from '../../../assets/leitura.png';
+// @ts-ignore
+import imgMusculacao from '../../../assets/musculacao.png';
+// @ts-ignore
+import imgAgua from '../../../assets/agua.png';
+// @ts-ignore
+import imgCorrendo from '../../../assets/correndo.png';
+
+// @ts-ignore
+import imgDezDias from '../../../assets/dezDias.png';
+// @ts-ignore
+import imgCinquentaDias from '../../../assets/cinquentaDias.png';
+// @ts-ignore
+import imgCemDias from '../../../assets/cemDias.png';
+
+// --- Interface para os dados do perfil ---
+interface PerfilData {
   nome: string;
   email: string;
-  nivel: number;
-  xp_atual: number;
-  xp_maximo: number;
+  avatar_url?: string;
+  total_xp: number;
+  nivel: string;
+  xp_proximo_nivel: number | null;
 }
 
 export const usePerfil = () => {
-  // Dados simulados iniciais para evitar telas em branco enquanto carrega
-  const [usuario, setUsuario] = useState<UsuarioDados>({
-    nome: 'Caio Trajano',
-    email: 'caio.trajano@email.com',
-    nivel: 1,
-    xp_atual: 0,
-    xp_maximo: 1000,
-  });
+  const [perfil, setPerfil] = useState<PerfilData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchPerfil = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Busca dados do perfil e saldo de XP em paralelo
+        const [perfilResponse, xpResponse] = await Promise.all([
+          api.get('/usuarios/perfil'),
+          api.get('/xp/saldo')
+        ]);
 
-  const buscarDadosAtuais = async () => {
-    try {
-      setLoading(true);
-      
-      // 1. Buscamos o saldo atualizado de XP (Rota blindada sem ID na URL!)
-      const respostaXp = await api.get('/xp/saldo');
-      
-      // 2. Buscamos dados básicos do perfil do usuário
-      const respostaPerfil = await api.get('/usuarios/perfil'); 
+        setPerfil({
+          nome: perfilResponse.data.nome || 'Usuário',
+          email: perfilResponse.data.email || '',
+          avatar_url: perfilResponse.data.avatar_url,
+          total_xp: xpResponse.data.total_xp ?? 0,
+          nivel: xpResponse.data.nivel_atual || 'Iniciante',
+          xp_proximo_nivel: xpResponse.data.xp_proximo_nivel ?? null,
+        });
+      } catch (err: any) {
+        console.error('Erro ao carregar perfil:', err);
+        setError('Não foi possível carregar os dados do perfil.');
+        // Fallback para não quebrar a UI
+        setPerfil({
+          nome: 'Usuário',
+          email: '',
+          total_xp: 0,
+          nivel: '--',
+          xp_proximo_nivel: null,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      // 3. Atualizamos o estado unificado
-      setUsuario({
-        nome: respostaPerfil.data.nome || 'Caio Trajano',
-        email: respostaPerfil.data.email || 'caio@email.com',
-        nivel: respostaXp.data.nivel || 1,
-        xp_atual: respostaXp.data.xp_atual || 0,
-        xp_maximo: respostaXp.data.xp_maximo || 1000,
-      });
-    } catch (error: any) {
-      console.warn(
-        '[usePerfil] Erro ao sincronizar XP. Usando dados locais.',
-        error?.message
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchPerfil();
+  }, []);
 
-  // O useCallback garante que a função não seja recriada a cada render, evitando gargalo de processamento.
-  useFocusEffect(
-    useCallback(() => {
-      buscarDadosAtuais();
-    }, [])
-  );
-
-  // Calcula com segurança para evitar divisão por zero
-  const divisor = usuario.xp_maximo > 0 ? usuario.xp_maximo : 1000;
-  const porcentagemXp = `${Math.min((usuario.xp_atual / divisor) * 100, 100)}%` as import('react-native').DimensionValue;
-
-  const dadosPessoais = [
-    { label: 'Data de Nascimento', value: '25/08/2000' },
-    { label: 'Curso', value: 'Análise e Des. de Sistemas' },
-    { label: 'Período', value: '5º Semestre' },
-    { label: 'Instituição', value: 'Faculdade CCI' },
+  // Dados estáticos (mockados) para as seções que ainda não estão integradas
+  const personalData = [
+    { label: 'Data de Nascimento', value: '15/04/1995' },
+    { label: 'Idade', value: '28 anos' },
+    { label: 'Peso', value: '62 kg' },
+    { label: 'Altura', value: '1.68 m' },
   ];
 
+  const achievements = [
+    { title: '10 Dias', icon: imgDezDias },
+    { title: '50 Dias', icon: imgCinquentaDias },
+    { title: '100 Dias', icon: imgCemDias },
+  ];
+
+  const myHabits = [
+    { label: 'Musculação', image: imgMusculacao },
+    { label: 'Leitura', image: imgLeitura },
+    { label: 'Beber Água', image: imgAgua },
+    { label: 'Correr', image: imgCorrendo },
+  ];
+
+  const handleEditProfile = () => {
+    console.log('Editar Perfil clicado');
+  };
+
   return {
-    userName: usuario.nome,
-    userEmail: usuario.email,
-    userLevel: usuario.nivel,
-    currentXp: usuario.xp_atual,
-    maxXp: usuario.xp_maximo,
-    xpPercentage: porcentagemXp,
-    personalData: dadosPessoais,
-    loading,
-    recarregar: buscarDadosAtuais,
+    perfil,
+    isLoading,
+    error,
+    personalData,
+    achievements,
+    myHabits,
+    handleEditProfile,
   };
 };

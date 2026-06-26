@@ -1,70 +1,49 @@
-// Importa a classe DataTypes para tipagem rigorosa das colunas
 const { DataTypes } = require("sequelize");
-// Conexão Singleton com o banco de dados (Padrão de Projeto: Singleton)
 const sequelize = require("../config/database");
 
-// Define o modelo "XpLog", representando a tabela de log de gamificação
 const XpLog = sequelize.define(
   "XpLog",
   {
-    log_id: {
+    id_xp_log: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-      field: 'log_id'
+      field: 'id_xp_log' // Mapeamento direto para a coluna física no PostgreSQL
     },
-    
-    // Foreign Key implícita na declaração, estabelecendo a relação estrutural
     usuario_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
-        model: 'tab_usuario', // Refere-se fisicamente à tabela no banco
+        model: 'tab_usuario',
         key: 'usuario_id'
       },
       onUpdate: 'CASCADE',
-      onDelete: 'CASCADE' // Integridade referencial: se o usuário sumir, os logs somem
+      onDelete: 'CASCADE'
     },
-
-    // Descrição da ação que gerou o XP (ex: "Bebeu 2L de água")
     id_motivo: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
-        model: 'tab_motivo', // Refere-se fisicamente à tabela no banco
+        model: 'tab_motivo',
         key: 'motivo_id'
       },
     },
-
-    // Quantidade de XP transacionada (pode ser positiva para ganhos ou negativa para penalidades)
-    valor_xp: {
+    xp_ganho: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'xp_ganho' // Alinhado com o campo de gamificação do banco de dados
     },
-
-    motivo: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-
-    // Timestamp da ocorrência. Crucial para ordenação temporal de eventos (Time-Series Data)
-    data_registro: {
+    data_hora: {
       type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW, 
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+      field: 'data_hora' // Timestamp nativo controlado pelo PostgreSQL
     }
   },
   {
-    tableName: "tb_xp_log", // Mapeamento estrito para o banco relacional
-    timestamps: false,      // Desabilitado, pois já gerenciamos via data_registro
+    tableName: "tab_xp_log",
+    timestamps: false, // Evita a criação automática de colunas createdAt/updatedAt pelo Sequelize
   }
 );
-
-/* 
- * NOTA DE ASSOCIAÇÃO:
- * Em um arquivo central de relacionamentos (ex: models/index.js), você deve declarar:
- * Usuario.hasMany(XpLog, { foreignKey: 'usuario_id' });
- * XpLog.belongsTo(Usuario, { foreignKey: 'usuario_id' });
- */
 
 module.exports = XpLog;

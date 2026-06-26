@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { API_URL } from '../../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type CadastroScreenProp = StackNavigationProp<RootStackParamList, 'Cadastro'>;
 
@@ -31,18 +32,32 @@ export const useCadastro = () => {
     setIsLoading(true);
 
     try {
-      // Integração real com o seu Backend (usuarioController.criar)
+      const emailNormalizado = email.toLowerCase().trim();
+
       const response = await fetch(`${API_URL}/usuarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, email, senha }),
+        body: JSON.stringify({ 
+          nome, 
+          email: emailNormalizado, 
+          senha 
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
         Alert.alert('Sucesso', 'Conta criada com sucesso!');
-        navigation.navigate('Home');
+
+        // Salva o token se o back-end retornar um (opcional)
+        // Se o back-end não retornar token, remova esta linha.
+        if (data.token) {
+          await AsyncStorage.setItem('@Apollo:token', data.token);
+          navigation.navigate('Home');
+        } else {
+          // Caso não retorne token, vai para o Login
+          navigation.navigate('Login');
+        }
       } else {
         Alert.alert('Erro', data.erro || 'Falha ao realizar cadastro.');
       }

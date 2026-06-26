@@ -4,9 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { API_URL } from '../../services/api';
-// 1. Importar o AsyncStorage
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 
@@ -16,11 +14,9 @@ type LoginScreenProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 export const useLogin = () => {
   const navigation = useNavigation<LoginScreenProp>();
-  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   const googleRedirectUri = "https://auth.expo.io/@higorreis/projeto-praticando";
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId: "892333494449-s3qviv65lhdmojbvp97upkgphlr6bj3b.apps.googleusercontent.com",
@@ -44,15 +40,16 @@ export const useLogin = () => {
     }
     setIsLoading(true);
     try {
+      const emailNormalizado = email.toLowerCase().trim();
+
       const res = await fetch(`${API_URL}/usuarios/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha: password })
+        body: JSON.stringify({ email: emailNormalizado, senha: password })
       });
       const data = await res.json();
       
       if (res.ok) {
-        // 2. Salva o token JWT no dispositivo
         await AsyncStorage.setItem('@Apollo:token', data.token);
         navigation.navigate('Home');
       } else {
@@ -77,7 +74,6 @@ export const useLogin = () => {
       const data = await res.json();
       
       if (res.ok) {
-        // 2. Salva o token também no fluxo do Google
         await AsyncStorage.setItem('@Apollo:token', data.token);
         navigation.navigate('Home');
       } else {
