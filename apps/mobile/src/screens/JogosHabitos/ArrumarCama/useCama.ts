@@ -26,33 +26,33 @@ export const useCama = () => {
   // Registra o hábito e envia o XP ao backend atomicamente.
   // O id_motivo vem do mapa centralizado MOTIVOS_XP —
   // nunca um número hardcoded (princípio DRY).
+  // Exibe o valor exato de XP ganho no alerta.
   // ============================================================
   const handleCheckIn = async () => {
     // Impede duplo registro no mesmo dia
     if (estaArrumada) {
-      Alert.alert("Aviso", "Você já concluiu este hábito hoje!");
+      Alert.alert('Aviso', 'Você já concluiu este hábito hoje!');
       return;
     }
 
     try {
       setLoading(true);
 
-      // Registra o XP no backend — servidor decide o valor (Security by Design)
-      const sucesso = await registrarXP(MOTIVOS_XP.ARRUMAR_CAMA);
+      // Registra o XP no backend — recebemos o objeto com sucesso e xp_ganho
+      const resultado = await registrarXP(MOTIVOS_XP.ARRUMAR_CAMA);
 
-      if (sucesso) {
+      if (resultado.sucesso) {
         setEstaArrumada(true);
         Alert.alert(
-          "Organizado!",
-          "Sua primeira vitória do dia! Quarto organizado, mente organizada. XP registrado!"
+          'Organizado!',
+          `Sua primeira vitória do dia! Quarto organizado, mente organizada. +${resultado.xp_ganho} XP registrado!`
         );
       } else {
         Alert.alert(
-          "Erro",
-          "Não foi possível registrar o XP. Verifique sua conexão e tente novamente."
+          'Erro',
+          'Não foi possível registrar o XP. Verifique sua conexão e tente novamente.'
         );
       }
-
     } finally {
       setLoading(false);
     }

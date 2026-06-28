@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
   
   // Estilo do link de retorno.
   backButton: { marginBottom: 15 },
-  backButtonText: { color: '#2563EB', fontWeight: 'bold' },
+  backButtonText: { color: colors.primary, fontWeight: 'bold' },
 
   // Card principal.
   mainCard: {
@@ -45,7 +45,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     elevation: 2
   },
-  buttonActive: { backgroundColor: '#2563EB' },
+  buttonActive: { backgroundColor: colors.primary },
   buttonDone: { backgroundColor: '#D1D5DB' },
   actionButtonText: { fontSize: 18, fontWeight: 'bold', color: colors.white },
 

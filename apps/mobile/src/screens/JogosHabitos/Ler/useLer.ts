@@ -5,126 +5,151 @@ import { api } from '../../../services/api';
 import { useRegistrarXP, MOTIVOS_XP } from '../../../hooks/useRegistrarXP';
 
 // ============================================================
-// INTERFACES
+// INTERFACE: Define a estrutura REAL retornada pelo back-end
+// O back-end retorna os dados com os seguintes campos:
+// - id_leitura: número identificador
+// - pag_lidas: quantidade de páginas lidas
+// - nota_leitura: reflexão sobre a leitura (pode ser null)
+// - data_hora: data do registro no formato ISO
+// - livro: objeto com nome_livro e autor (relacionamento)
 // ============================================================
-
-// Representa uma entrada de leitura vinda do backend
 export interface ReadingEntry {
   id_leitura: number;
-  nome_livro: string;
-  paginas_lidas: number;
-  nota: string;
-  data_registro: string;
+  pag_lidas: number;
+  nota_leitura: string | null;
+  data_hora: string;
+  livro: {
+    nome_livro: string;
+    autor: string | null;
+  };
 }
 
 // ============================================================
 // HOOK: useLer
-// Responsabilidade: controlar o registro de leitura e
-// persistir os dados no backend via API REST.
-// Substitui dados hardcoded por Single Source of Truth
-// (dados reais do PostgreSQL via Sequelize ORM).
+// Responsabilidade: gerenciar estados, carregar histórico e
+// registrar novas leituras, integrando com a API e o sistema de XP.
 // ============================================================
 export const useLer = () => {
   const navigation = useNavigation();
   const { registrarXP } = useRegistrarXP();
 
-  // --- Estados do formulário ---
-  const [bookName, setBookName]   = useState('');
+  // Estados do formulário (o que o usuário digita)
+  const [bookName, setBookName] = useState('');
   const [pagesRead, setPagesRead] = useState('');
-  const [note, setNote]           = useState('');
+  const [note, setNote] = useState('');
 
-  // --- Estados de dados ---
-  const [totalMonthPages, setTotalMonthPages] = useState(0); // Total real do banco
-  const [history, setHistory]                 = useState<ReadingEntry[]>([]);
-  const [loading, setLoading]                 = useState(false);
+  // Estados de dados (vindos da API)
+  const [totalMonthPages, setTotalMonthPages] = useState(0);
+  const [history, setHistory] = useState<ReadingEntry[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // ============================================================
   // FUNÇÃO: carregarHistorico
-  // Busca o histórico real de leituras do usuário no backend.
-  // Single Source of Truth — elimina dados hardcoded.
+  // Busca no backend o histórico de leituras do usuário.
+  // O backend retorna um array diretamente (não um objeto com "registros").
   // ============================================================
   const carregarHistorico = async () => {
     try {
       setLoading(true);
       const res = await api.get('/leitura/historico');
-      setHistory(res.data.registros);
-      setTotalMonthPages(res.data.total_paginas_mes);
+
+      // O retorno é um array de leituras
+      const dados = res.data || [];
+      setHistory(dados);
+
+      // Calcula o total de páginas lidas no mês atual
+      const now = new Date();
+      const mesAtual = now.getMonth();
+      const anoAtual = now.getFullYear();
+      const total = dados
+        .filter((item: any) => {
+          const data = new Date(item.data_hora);
+          return data.getMonth() === mesAtual && data.getFullYear() === anoAtual;
+        })
+        .reduce((acc: number, item: any) => acc + (item.pag_lidas || 0), 0);
+      setTotalMonthPages(total);
     } catch (error: any) {
-      console.error(
-        '[useLer] Erro ao carregar histórico:',
-        error?.response?.data || error.message
-      );
+      console.error('[useLer] Erro ao carregar histórico:', error?.response?.data || error.message);
+      setHistory([]);
+      setTotalMonthPages(0);
     } finally {
       setLoading(false);
     }
   };
 
-  // Carrega ao montar a tela (Lifecycle Hook)
+  // Carrega o histórico automaticamente ao abrir a tela
   useEffect(() => {
     carregarHistorico();
   }, []);
 
   // ============================================================
   // FUNÇÃO: handleAddReading
-  // Valida o formulário, persiste no backend e registra XP.
-  // Operação em duas etapas — registro de leitura e XP são
-  // chamadas separadas pois pertencem a domínios diferentes
-  // (tab_leitura e tb_xp_log). Futuramente podem ser unificadas
-  // em uma Transaction no backend (padrão Unit of Work — Fowler, 2002).
+  // Valida os campos, envia os dados para a API e registra XP.
   // ============================================================
   const handleAddReading = async () => {
-    // Validação de campos obrigatórios
+    // Validação: nome do livro e páginas são obrigatórios
     if (!bookName || !pagesRead) {
-      Alert.alert("Preencha o nome do livro e a quantidade de páginas.");
+      Alert.alert('Preencha o nome do livro e a quantidade de páginas.');
       return;
     }
 
     const pages = parseInt(pagesRead);
 
-    // Validação de domínio: páginas devem ser número positivo
+    // Validação: páginas deve ser um número positivo
     if (isNaN(pages) || pages <= 0) {
-      Alert.alert("Erro", "Quantidade de páginas inválida.");
+      Alert.alert('Erro', 'Quantidade de páginas inválida.');
       return;
     }
 
     try {
       setLoading(true);
 
-      // Persiste o registro de leitura no backend
+      // 1. Persiste o registro de leitura no backend
       await api.post('/leitura/registrar', {
-        nome_livro:    bookName,
+        nome_livro: bookName,
         paginas_lidas: pages,
-        nota:          note || null
+        nota: note || null
       });
 
-      // Registra XP no backend — servidor decide o valor (Security by Design)
-      await registrarXP(MOTIVOS_XP.LEITURA);
+      // 2. Registra o ganho de XP (motivo LEITURA) e captura o valor
+      const resultado = await registrarXP(MOTIVOS_XP.LEITURA);
 
-      // Reseta o formulário após sucesso
+      // 3. Limpa o formulário
       setBookName('');
       setPagesRead('');
       setNote('');
 
-      Alert.alert(
-        "Sucesso!",
-        `Você leu ${pages} página(s) de "${bookName}". XP registrado!`
-      );
+      // 4. Feedback ao usuário (com XP ganho)
+      if (resultado.sucesso) {
+        Alert.alert(
+          'Sucesso! 📚',
+          `Você leu ${pages} página(s) de "${bookName}". +${resultado.xp_ganho} XP!`
+        );
+      } else {
+        Alert.alert(
+          'Aviso',
+          'Leitura registrada, mas não foi possível registrar o XP. Verifique sua conexão.'
+        );
+      }
 
-      // Recarrega o histórico com os dados atualizados do banco
+      // 5. Recarrega o histórico para mostrar os dados atualizados
       await carregarHistorico();
-
     } catch (error: any) {
       Alert.alert(
-        "Erro",
-        "Não foi possível registrar a leitura. Verifique sua conexão."
+        'Erro',
+        'Não foi possível registrar a leitura. Verifique sua conexão.'
       );
     } finally {
       setLoading(false);
     }
   };
 
+  // Navega de volta para a tela anterior
   const handleGoBack = () => navigation.goBack();
 
+  // ============================================================
+  // Retorna todos os estados e funções para a View consumir
+  // ============================================================
   return {
     bookName,
     setBookName,

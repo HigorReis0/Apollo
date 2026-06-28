@@ -26,16 +26,14 @@ export const useMeditar = () => {
   // Loading durante requisição ao backend
   const [loading, setLoading] = useState(false);
 
+  // Valor do campo de entrada para tempo personalizado (em minutos)
+  const [inputMinutos, setInputMinutos] = useState('');
+
   // useRef armazena o ID do intervalo sem causar re-render.
-  // Diferente do useState, mutações no ref não re-renderizam o componente —
-  // padrão essencial para timers (Abramov, "Overreacted", 2019).
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ============================================================
   // EFFECT: controla o ciclo de vida do timer
-  // A função de limpeza (return) garante que o intervalo seja
-  // destruído ao desmontar o componente — previne memory leak,
-  // violação do princípio de gerenciamento de recursos (RAII).
   // ============================================================
   useEffect(() => {
     if (isAtivo && tempoRestante > 0) {
@@ -43,12 +41,10 @@ export const useMeditar = () => {
         setTempoRestante(prev => prev - 1);
       }, 1000);
     } else if (tempoRestante === 0 && isAtivo) {
-      // Timer chegou a zero — encerra e registra XP
       setIsAtivo(false);
       handleConcluirSessao();
     }
 
-    // Limpeza: destrói o intervalo ao pausar ou desmontar
     return () => {
       if (intervaloRef.current) {
         clearInterval(intervaloRef.current);
@@ -59,26 +55,24 @@ export const useMeditar = () => {
   // ============================================================
   // FUNÇÃO: handleConcluirSessao
   // Registra o XP no backend ao término da sessão.
-  // Protegida contra duplo disparo via flag xpConcedido.
   // ============================================================
   const handleConcluirSessao = async () => {
-    // Impede duplo registro caso o effect dispare mais de uma vez
     if (xpConcedido) return;
 
     try {
       setLoading(true);
-      const sucesso = await registrarXP(MOTIVOS_XP.MEDITACAO);
+      const resultado = await registrarXP(MOTIVOS_XP.MEDITACAO);
 
-      if (sucesso) {
+      if (resultado.sucesso) {
         setXpConcedido(true);
         Alert.alert(
-          "Mente em Paz 🧘",
-          "Sua sessão de meditação foi concluída com sucesso! XP registrado!"
+          'Mente em Paz',
+          `Sua sessão de meditação foi concluída com sucesso! +${resultado.xp_ganho} XP registrado!`
         );
       } else {
         Alert.alert(
-          "Sessão concluída",
-          "Meditação concluída, mas não foi possível registrar o XP. Verifique sua conexão."
+          'Sessão concluída',
+          'Meditação concluída, mas não foi possível registrar o XP. Verifique sua conexão.'
         );
       }
     } finally {
@@ -94,11 +88,32 @@ export const useMeditar = () => {
   };
 
   // Altera a duração da sessão (5, 10 ou 15 minutos)
-  // Reseta o timer e o flag de XP ao trocar de duração
   const selecionarDuracao = (minutos: number) => {
     setIsAtivo(false);
     setTempoRestante(minutos * 60);
     setXpConcedido(false);
+    setInputMinutos(''); // Limpa o campo personalizado
+  };
+
+  // ============================================================
+  // FUNÇÃO: definirTempoPersonalizado
+  // Permite ao usuário digitar um valor customizado em minutos.
+  // Valida se é um número positivo e atualiza o timer.
+  // ============================================================
+  const definirTempoPersonalizado = () => {
+    const minutos = parseInt(inputMinutos);
+    if (isNaN(minutos) || minutos <= 0) {
+      Alert.alert('Erro', 'Digite um valor válido em minutos (ex.: 3, 7, 12).');
+      return;
+    }
+    if (minutos > 120) {
+      Alert.alert('Erro', 'O tempo máximo é de 120 minutos.');
+      return;
+    }
+    setIsAtivo(false);
+    setTempoRestante(minutos * 60);
+    setXpConcedido(false);
+    setInputMinutos('');
   };
 
   // Alterna entre pausar e retomar o timer
@@ -111,8 +126,11 @@ export const useMeditar = () => {
     isAtivo,
     loading,
     xpConcedido,
+    inputMinutos,
+    setInputMinutos,
     formatarTempo,
     selecionarDuracao,
+    definirTempoPersonalizado,
     toggleTimer,
     handleGoBack,
   };

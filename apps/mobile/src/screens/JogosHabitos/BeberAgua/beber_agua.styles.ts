@@ -1,188 +1,219 @@
-// Importa utilitários de estilo e tipos para garantir que as propriedades de estilo sejam válidas.
 import { StyleSheet, ViewStyle, TextStyle, ImageStyle } from 'react-native';
-// Importa o objeto de cores do tema global (subindo 3 níveis de diretório).
 import { colors } from '../../../theme/colors';
 
-// Interface TypeScript que define a estrutura e os tipos dos estilos.
-// Isso ajuda o editor a sugerir propriedades corretas (ex: não sugerir 'color' para uma ViewStyle).
+// ============================================================
+// INTERFACE: define a tipagem de cada estilo
+// Cada propriedade é tipada como ViewStyle, TextStyle ou ImageStyle
+// para garantir que usamos as propriedades corretas em cada elemento.
+// ============================================================
 interface BeberAguaStyle {
-  safeArea: ViewStyle;          // Área segura da tela.
-  container: ViewStyle;         // Container principal rolável.
-  
-  // Linha divisória do cabeçalho
-  headerDivider: ViewStyle;     // Estilo da linha separadora abaixo do header.
-
-  // Card Principal e Conteúdo
-  mainCard: ViewStyle;          // O cartão branco principal.
-  contentContainer: ViewStyle;  // Container interno do cartão.
-  title: TextStyle;             // Título principal ("Hidratação Diária").
-  subtitle: TextStyle;          // Subtítulo explicativo.
-  
-  // Gamificação (Barra de Nível/XP)
-  gamificationContainer: ViewStyle; // Container da pílula de gamificação.
-  levelIcon: ImageStyle;            // Ícone do nível (ex: medalha/óculos).
-  levelText: TextStyle;             // Texto do nível ("Hidratado").
-  pointsText: TextStyle;            // Texto dos pontos (XP).
-
-  // Contador e Ícone
-  counterRow: ViewStyle;        // Linha que contém a imagem da bebida e o contador circular.
-  counterContainer: ViewStyle;  // O círculo central com o número.
-  counterText: TextStyle;       // O número grande (ml consumidos).
-  infoText: TextStyle;          // Texto pequeno abaixo do número ("ml / 2000").
-  drinkImage: ImageStyle;       // A imagem da bebida (copo, garrafa, etc).
-
-  // Seletores (Dropdown)
-  sectionLabel: TextStyle;      // Título das seções ("O que você vai beber?").
-  dropdownContainer: ViewStyle; // Container do menu dropdown.
-  dropdownHeader: ViewStyle;    // A parte clicável do dropdown (mostra a seleção atual).
-  dropdownHeaderText: TextStyle;// Texto dentro do header do dropdown.
-  dropdownList: ViewStyle;      // A lista de opções que aparece ao abrir.
-  dropdownItem: ViewStyle;      // Cada item clicável da lista.
-  dropdownItemText: TextStyle;  // Texto de cada item da lista.
-
-  // Botões de Volume (Scroll Horizontal)
-  selectorScroll: ViewStyle;    // O ScrollView horizontal dos botões de volume.
-  optionButton: ViewStyle;      // Estilo base do botão de volume.
-  optionButtonSelected: ViewStyle; // Estilo extra quando o botão está selecionado.
-  optionText: TextStyle;        // Texto base do botão.
-  optionTextSelected: TextStyle;// Texto do botão quando selecionado.
-
-  // Histórico
-  divider: ViewStyle;           // Linha divisória fina.
-  historyContainer: ViewStyle;  // Container da seção de histórico.
-  historyTitle: TextStyle;      // Título "Histórico Recente".
-  historyAverage: TextStyle;    // Texto da média diária.
-  historyList: ViewStyle;       // Container da lista de itens.
-  historyItem: ViewStyle;       // Linha de cada item do histórico.
-  historyDate: TextStyle;       // Data do histórico.
-  historyValue: TextStyle;      // Valor consumido no histórico.
+  safeArea: ViewStyle;
+  container: ViewStyle;
+  headerDivider: ViewStyle;
+  mainCard: ViewStyle;
+  contentContainer: ViewStyle;
+  title: TextStyle;
+  subtitle: TextStyle;
+  gamificationContainer: ViewStyle;
+  levelIcon: ImageStyle;
+  levelText: TextStyle;
+  pointsText: TextStyle;
+  counterRow: ViewStyle;
+  counterContainer: ViewStyle;
+  counterText: TextStyle;
+  infoText: TextStyle;
+  drinkImage: ImageStyle;
+  sectionLabel: TextStyle;
+  dropdownContainer: ViewStyle;
+  dropdownHeader: ViewStyle;
+  dropdownHeaderText: TextStyle;
+  dropdownList: ViewStyle;
+  dropdownItem: ViewStyle;
+  dropdownItemText: TextStyle;
+  selectorScroll: ViewStyle;
+  optionButton: ViewStyle;
+  optionButtonSelected: ViewStyle;
+  optionText: TextStyle;
+  optionTextSelected: TextStyle;
+  divider: ViewStyle;
+  historyContainer: ViewStyle;
+  historyTitle: TextStyle;
+  historyAverage: TextStyle;
+  historyList: ViewStyle;
+  historyItem: ViewStyle;
+  historyDate: TextStyle;
+  historyValue: TextStyle;
+  backButton: ViewStyle;
+  backButtonText: TextStyle;
+  // ============================================================
+  // NOVOS ESTILOS: botão de reset
+  // ============================================================
+  resetButton: ViewStyle;
+  resetButtonText: TextStyle;
 }
 
-// Criação e exportação dos estilos.
+// ============================================================
+// EXPORTAÇÃO DOS ESTILOS
+// ============================================================
 export const styles = StyleSheet.create<BeberAguaStyle>({
-  // Garante que a tela ocupe todo o espaço e tenha o fundo cinza claro.
+
+  // ============================================================
+  // CONTAINER PRINCIPAL
+  // ============================================================
+
+  // SafeAreaView: ocupa toda a tela com fundo definido no tema
   safeArea: {
-    flex: 1, 
+    flex: 1,
     backgroundColor: colors.background,
   },
-  // Configuração do ScrollView principal.
+
+  // ScrollView: espaçamento lateral e inferior para rolagem
   container: {
-    flexGrow: 1, // Permite que o container cresça para permitir rolagem.
-    paddingHorizontal: 20, // Espaçamento nas laterais da tela.
-    paddingBottom: 40, // Espaço extra no final para não cortar conteúdo.
-  },
-  
-  // --- Linha Divisória Superior (Ajustada) ---
-  headerDivider: {
-    height: 1, // Altura de 1 pixel (linha fina).
-    backgroundColor: '#E5E7EB', // Cor cinza claro.
-    width: '100%', // Ocupa toda a largura.
-    // Margem negativa para puxar a linha para cima, compensando o espaço do Header.
-    marginTop: -25, 
-    marginBottom: 15, // Espaço abaixo da linha.
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
 
-  // --- Card Principal ---
+  // ============================================================
+  // LINHA DIVISÓRIA (abaixo do header)
+  // ============================================================
+
+  headerDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    width: '100%',
+    marginTop: -25,   // Compensa o espaço do Header
+    marginBottom: 15,
+  },
+
+  // ============================================================
+  // CARTÃO PRINCIPAL
+  // ============================================================
+
   mainCard: {
-    backgroundColor: colors.white, // Fundo branco.
-    borderRadius: 30, // Bordas bem arredondadas.
-    padding: 25, // Espaçamento interno.
+    backgroundColor: colors.white,
+    borderRadius: 30,
+    padding: 25,
     marginTop: 0,
-    // Sombras (iOS):
-    shadowColor: colors.primary, // Sombra azulada.
+    // Sombra para iOS
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 15,
-    // Sombra (Android):
+    // Sombra para Android
     elevation: 5,
   },
+
+  // Container interno (reservado para ajustes)
   contentContainer: {
     marginTop: 0,
   },
+
+  // ============================================================
+  // TÍTULOS
+  // ============================================================
+
+  // Título principal (ex.: "Hidratação Diária")
   title: {
-    fontSize: 26, 
-    fontWeight: 'bold', // Negrito forte.
-    color: colors.textDark, // Preto.
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: colors.textDark,
     marginBottom: 5,
-    textAlign: 'left', // Alinhado à esquerda.
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#6B7280', // Cinza médio.
     textAlign: 'left',
-    marginBottom: 30, // Espaço grande antes do contador.
-    lineHeight: 22, // Altura da linha para melhor leitura.
   },
 
-  // --- Gamificação ---
+  // Subtítulo explicativo
+  subtitle: {
+    fontSize: 15,
+    color: '#6B7280',
+    textAlign: 'left',
+    marginBottom: 30,
+    lineHeight: 22,
+  },
+
+  // ============================================================
+  // GAMIFICAÇÃO (pílula de nível e XP)
+  // ============================================================
+
   gamificationContainer: {
-    flexDirection: 'row', // Ícone e texto lado a lado.
-    alignItems: 'center', // Centraliza verticalmente.
-    backgroundColor: '#F0F9FF', // Fundo azul bem claro.
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F9FF',
     paddingVertical: 8,
     paddingHorizontal: 15,
-    borderRadius: 50, // Bordas totalmente arredondadas (pílula).
+    borderRadius: 50,
     marginBottom: 20,
-    alignSelf: 'flex-start', // O container ocupa apenas o espaço necessário (não estica).
+    alignSelf: 'flex-start',  // Não estica, fica do tamanho do conteúdo
     borderWidth: 2,
-    borderColor: '#BAE6FD', // Borda azul claro.
+    borderColor: '#BAE6FD',
   },
+
   levelIcon: {
     width: 35,
     height: 35,
-    marginRight: 10, // Espaço entre ícone e texto.
+    marginRight: 10,
   },
+
   levelText: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: colors.primary, // Texto azul.
+    color: colors.primary,
     marginRight: 10,
   },
+
   pointsText: {
     fontSize: 14,
     fontWeight: 'bold',
     color: colors.textDark,
-    backgroundColor: colors.white, // Fundo branco para destacar o XP.
+    backgroundColor: colors.white,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 20,
-    overflow: 'hidden', // Garante que o fundo respeite o borderRadius.
+    overflow: 'hidden',
   },
-  
-  // --- Contador e Ícone ---
+
+  // ============================================================
+  // CONTADOR E ÍCONE
+  // ============================================================
+
   counterRow: {
-    flexDirection: 'row-reverse', // Inverte a ordem: [Contador] [Imagem] -> [Imagem] [Contador].
-    alignItems: 'center', // Centraliza verticalmente.
-    justifyContent: 'center', // Centraliza horizontalmente.
+    flexDirection: 'row-reverse', // Inverte: ícone à esquerda, contador à direita
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 35,
     width: '100%',
   },
+
   drinkImage: {
     width: 90,
     height: 90,
-    marginLeft: 25, // Espaço à esquerda (que na verdade separa do contador devido ao row-reverse ou ordem visual).
+    marginLeft: 25, // Espaço entre o ícone e o círculo
   },
+
+  // Círculo central com o total consumido
   counterContainer: {
     width: 150,
     height: 150,
-    borderRadius: 75, // Metade da largura/altura = Círculo perfeito.
+    borderRadius: 75, // Metade da largura = círculo perfeito
     backgroundColor: colors.white,
-    borderWidth: 6, // Borda grossa.
-    borderColor: '#BAE6FD', // Cor da borda azul claro.
-    alignItems: 'center', // Centraliza o texto dentro do círculo.
+    borderWidth: 6,
+    borderColor: '#BAE6FD',
+    alignItems: 'center',
     justifyContent: 'center',
-    // Sombra do círculo:
+    // Sombra com efeito "glow"
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 }, // Sombra centralizada (glow).
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 8,
   },
+
   counterText: {
-    fontSize: 40, // Número bem grande.
-    fontWeight: '900', // Extra negrito (Black).
+    fontSize: 40,
+    fontWeight: '900',
     color: colors.primary,
   },
+
   infoText: {
     fontSize: 14,
     fontWeight: '600',
@@ -190,151 +221,215 @@ export const styles = StyleSheet.create<BeberAguaStyle>({
     marginTop: 2,
   },
 
-  // --- Seletores ---
+  // ============================================================
+  // RÓTULOS DE SEÇÃO
+  // ============================================================
+
   sectionLabel: {
     fontSize: 17,
     fontWeight: 'bold',
     color: colors.textDark,
-    alignSelf: 'flex-start', // Alinha à esquerda.
+    alignSelf: 'flex-start',
     marginBottom: 12,
     marginTop: 5,
   },
-  
-  // Dropdown
+
+  // ============================================================
+  // DROPDOWN DE BEBIDAS
+  // ============================================================
+
   dropdownContainer: {
     width: '100%',
     marginBottom: 20,
-    zIndex: 10, // Garante que o dropdown fique sobre outros elementos se eles se sobrepuserem.
+    zIndex: 10, // Fica acima de outros elementos
   },
+
   dropdownHeader: {
-    flexDirection: 'row', // Texto e setinha lado a lado.
-    justifyContent: 'space-between', // Espalha (texto na esq, seta na dir).
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB', // Fundo cinza claro.
-    borderRadius: 16, 
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderWidth: 0, 
+    borderWidth: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
   },
+
   dropdownHeaderText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.textDark,
   },
+
   dropdownList: {
     backgroundColor: colors.white,
     borderRadius: 16,
-    marginTop: 8, // Espaço entre o header e a lista.
-    overflow: 'hidden', // Garante que os itens não vazem das bordas arredondadas.
-    borderWidth: 0,
-    // Sombra da lista aberta:
+    marginTop: 8,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5,
   },
+
   dropdownItem: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderBottomWidth: 1, // Linha separadora entre itens.
+    borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
+
   dropdownItemText: {
     fontSize: 16,
     color: '#6B7280',
   },
 
-  // Botões de Volume
+  // ============================================================
+  // SELETOR DE VOLUME (horizontal)
+  // ============================================================
+
   selectorScroll: {
     width: '100%',
     marginBottom: 15,
   },
+
   optionButton: {
     paddingVertical: 10,
     paddingHorizontal: 18,
-    borderRadius: 30, // Formato de pílula.
-    borderWidth: 2, 
-    borderColor: '#E5E7EB', // Borda cinza padrão.
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
     backgroundColor: colors.white,
-    marginRight: 10, // Espaço entre os botões.
+    marginRight: 10,
   },
-  // Estilo aplicado quando o botão está selecionado:
+
   optionButtonSelected: {
-    backgroundColor: colors.primary, // Fundo azul.
-    borderColor: colors.primary, // Borda azul.
-    // Sombra colorida para destaque:
-    shadowColor: colors.primary, 
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 4,
   },
+
   optionText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280', // Texto cinza padrão.
+    color: '#6B7280',
   },
-  // Texto quando selecionado:
+
   optionTextSelected: {
-    color: colors.white, // Texto branco.
+    color: colors.white,
     fontWeight: 'bold',
   },
 
-  // --- Histórico ---
+  // ============================================================
+  // DIVISÓRIA
+  // ============================================================
+
   divider: {
-    height: 2, 
+    height: 2,
     backgroundColor: '#F3F4F6',
     width: '100%',
-    marginVertical: 25, // Espaçamento vertical generoso.
+    marginVertical: 25,
     borderRadius: 1,
   },
+
+  // ============================================================
+  // HISTÓRICO
+  // ============================================================
+
   historyContainer: {
     width: '100%',
   },
+
   historyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.textDark,
     marginBottom: 10,
   },
+
   historyAverage: {
     fontSize: 14,
     color: '#6B7280',
     marginBottom: 15,
-    backgroundColor: '#F0F9FF', // Destaque azul claro.
+    backgroundColor: '#F0F9FF',
     alignSelf: 'flex-start',
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 10,
     fontWeight: '600',
   },
+
   historyList: {
-    backgroundColor: '#F9FAFB', // Fundo cinza para a lista inteira.
+    backgroundColor: '#F9FAFB',
     borderRadius: 20,
     padding: 15,
     borderWidth: 0,
   },
+
   historyItem: {
-    flexDirection: 'row', // Data na esq, valor na dir.
+    flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 12,
-    borderBottomWidth: 1, // Linha separadora.
+    borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
+
   historyDate: {
     fontSize: 14,
     fontWeight: '500',
     color: '#6B7280',
   },
+
   historyValue: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: colors.primary, // Valor em destaque (azul).
+    color: colors.primary,
   },
+
+  // ============================================================
+  // BOTÃO DE VOLTAR PARA HÁBITOS
+  // Cor azul padrão (colors.primary) para consistência visual.
+  // ============================================================
+
+  backButton: {
+    marginTop: 10,
+    marginBottom: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignSelf: 'flex-start', // Alinhado à esquerda
+  },
+
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary, // Azul padrão
+    textDecorationLine: 'underline',
+  },
+
+  // ============================================================
+  // BOTÃO DE RESET (zerar registro)
+  // ============================================================
+
+  resetButton: {
+    marginTop: 10,
+    marginBottom: 30,
+    alignItems: 'center',
+  },
+
+  resetButtonText: {
+    color: '#9CA3AF',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+
 });

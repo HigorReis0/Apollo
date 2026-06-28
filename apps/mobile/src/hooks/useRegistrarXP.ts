@@ -32,21 +32,29 @@ export type MotivoXP = typeof MOTIVOS_XP[keyof typeof MOTIVOS_XP];
 // com o endpoint POST /xp/registrar.
 // Retorna um callback estável via useCallback para evitar
 // re-renders desnecessários nos componentes filhos.
+// 
+// ATUALIZAÇÃO: agora retorna um objeto { sucesso, xp_ganho }
+// para que os hooks consumidores possam exibir o valor exato de XP.
 // ============================================================
 export const useRegistrarXP = () => {
 
-  const registrarXP = useCallback(async (id_motivo: MotivoXP): Promise<boolean> => {
+  const registrarXP = useCallback(async (id_motivo: MotivoXP): Promise<{ sucesso: boolean; xp_ganho?: number }> => {
     try {
       // Envia o id_motivo ao backend — o servidor decide quanto XP vale
       // (Security by Design: cliente nunca define o valor de XP)
-      await api.post('/xp/registrar', { id_motivo });
-      return true; // Sucesso
+      const response = await api.post('/xp/registrar', { id_motivo });
+
+      // O backend deve retornar o xp_ganho no corpo da resposta
+      return { 
+        sucesso: true, 
+        xp_ganho: response.data?.xp_ganho || 0 
+      };
     } catch (error: any) {
       console.error(
         '[useRegistrarXP] Falha ao registrar XP:',
         error?.response?.data || error.message
       );
-      return false; // Falha — o hook que consome decide como tratar
+      return { sucesso: false }; // Falha — o hook que consome decide como tratar
     }
   }, []); // Sem dependências: função estável durante todo o ciclo de vida
 

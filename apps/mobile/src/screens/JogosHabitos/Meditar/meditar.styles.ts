@@ -71,6 +71,56 @@ export const styles = StyleSheet.create({
   // Força a alteração da cor da fonte para branca para manter a legibilidade quando o fundo do componente ficar escuro.
   durationButtonTextSelected: { color: colors.white, fontWeight: 'bold' },
 
+  // ============================================================
+  // SEÇÃO: TEMPO PERSONALIZADO (campo + botão)
+  // ============================================================
+
+  // Container que agrupa o campo de texto e o botão "Definir" lado a lado.
+  customInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    width: '100%',
+  },
+
+  // Campo de entrada para o usuário digitar o tempo em minutos.
+  customInput: {
+    flex: 1,
+    height: 48,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    color: '#1F2937',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginRight: 10,
+  },
+
+  // Botão "Definir" (estado desabilitado / inativo)
+  customButton: {
+    backgroundColor: '#D1D5DB',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 80,
+  },
+
+  // Botão "Definir" (estado ativo / habilitado)
+  customButtonActive: {
+    backgroundColor: colors.primary,
+  },
+
+  // Texto do botão "Definir" (branco para contraste)
+  customButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+
   // Estilo estrutural do botão de controle central que liga/desliga o cronômetro.
   controlButton: { 
     width: '100%',                // Expande o botão para preencher toda a largura útil horizontal disponível na tela.

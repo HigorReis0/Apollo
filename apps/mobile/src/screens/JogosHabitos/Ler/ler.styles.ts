@@ -1,113 +1,105 @@
-// Importa os utilitários de criação de estilo e os tipos de estilo do React Native.
 import { StyleSheet, ViewStyle, TextStyle, ImageStyle } from 'react-native';
-// Importa as cores do tema global, subindo 3 níveis na estrutura de pastas.
 import { colors } from '../../../theme/colors';
 
-// Interface TypeScript que define a estrutura e os tipos dos estilos deste arquivo.
-// Isso ajuda a prevenir erros de digitação e garante que estamos usando as propriedades corretas (View vs Text vs Image).
 interface LerStyle {
-  safeArea: ViewStyle;          // Estilo da área segura da tela.
-  container: ViewStyle;         // Estilo do container principal de rolagem.
-  
-  // Card Principal
-  mainCard: ViewStyle;          // Estilo do cartão branco principal.
-  contentContainer: ViewStyle;  // Estilo para o conteúdo dentro do cartão.
-  
-  // Cabeçalho da Seção
-  titleRow: ViewStyle;          // Container (linha) para o ícone e o título.
-  iconImage: ImageStyle;        // Estilo da imagem do ícone.
-  title: TextStyle;             // Estilo do texto do título.
-  subtitle: TextStyle;          // Estilo do texto do subtítulo.
-
-  // Estatísticas (Contador)
-  statsContainer: ViewStyle;    // Container para a caixa de estatísticas destacada.
-  statsValue: TextStyle;        // Estilo para o número grande (valor).
-  statsLabel: TextStyle;        // Estilo para o texto descritivo abaixo do valor.
-
-  // Seção de Formulário
-  sectionTitle: TextStyle;      // Estilo para os títulos de seção ("Registrar Leitura", etc.).
-  inputContainer: ViewStyle;    // Container que agrupa os inputs.
-  
-  // Histórico
-  divider: ViewStyle;           // Estilo para a linha divisória horizontal.
-  historyList: ViewStyle;       // Container para a lista de itens do histórico.
-  historyItem: ViewStyle;       // Estilo para cada item individual do histórico.
-  bookTitle: TextStyle;         // Estilo para o nome do livro no histórico.
-  bookPages: TextStyle;         // Estilo para a informação de páginas e data.
-  bookNote: TextStyle;          // Estilo para a nota/reflexão do livro.
+  safeArea: ViewStyle;
+  container: ViewStyle;
+  mainCard: ViewStyle;
+  contentContainer: ViewStyle;
+  titleRow: ViewStyle;
+  iconImage: ImageStyle;
+  title: TextStyle;
+  subtitle: TextStyle;
+  statsContainer: ViewStyle;
+  statsValue: TextStyle;
+  statsLabel: TextStyle;
+  sectionTitle: TextStyle;
+  inputContainer: ViewStyle;
+  divider: ViewStyle;
+  historyList: ViewStyle;
+  historyItem: ViewStyle;
+  bookTitle: TextStyle;
+  bookPages: TextStyle;
+  bookNote: TextStyle;
+  emptyMessage: TextStyle;
+  backButton: ViewStyle;
+  backButtonText: TextStyle;
 }
 
-// Criação e exportação do objeto de estilos.
 export const styles = StyleSheet.create<LerStyle>({
-  // Garante que a tela ocupe todo o espaço vertical disponível.
+
+  // Container principal
   safeArea: {
-    flex: 1, 
-    backgroundColor: colors.background, // Cor de fundo global (cinza claro).
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  // Configuração do ScrollView principal.
+
   container: {
-    flexGrow: 1, // Permite que o conteúdo cresça além da tela para rolar.
-    paddingHorizontal: 20, // Espaçamento nas laterais.
-    paddingBottom: 40, // Espaço extra no final para não cortar conteúdo.
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
-  
-  // --- Card Principal (Estilo "Macio") ---
+
+  // Card principal
   mainCard: {
-    backgroundColor: colors.white, // Fundo branco.
-    borderRadius: 30, // Bordas bem arredondadas.
-    padding: 25, // Espaçamento interno.
-    marginTop: 10, // Separação do topo.
-    // Sombras suaves para dar profundidade (iOS):
+    backgroundColor: colors.white,
+    borderRadius: 30,
+    padding: 25,
+    marginTop: 10,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 15,
-    // Sombra para Android:
     elevation: 5,
   },
-  // Ajuste fino para o container de conteúdo (se necessário).
+
   contentContainer: {
     marginTop: 0,
   },
 
-  // --- Título e Ícone ---
+  // Título e ícone
   titleRow: {
-    flexDirection: 'row', // Alinha ícone e texto na horizontal.
-    alignItems: 'center', // Centraliza verticalmente.
-    marginBottom: 5, // Espaço abaixo do título.
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
   },
+
   iconImage: {
     width: 40,
     height: 40,
-    marginRight: 10, // Espaço entre o ícone e o texto.
+    marginRight: 10,
   },
+
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.textDark, // Cor escura para destaque.
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#6B7280', // Cinza médio para texto secundário.
-    marginBottom: 20, // Espaço maior para separar do bloco de estatísticas.
-    lineHeight: 20, // Altura da linha para melhor leitura.
+    color: colors.textDark,
   },
 
-  // --- Contador de Páginas (Destaque) ---
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+
+  // Estatística
   statsContainer: {
-    backgroundColor: '#F0F9FF', // Azul bem claro (fundo do destaque).
+    backgroundColor: '#F0F9FF',
     borderRadius: 20,
     padding: 20,
-    alignItems: 'center', // Centraliza o texto no meio da caixa.
+    alignItems: 'center',
     marginBottom: 25,
-    borderWidth: 2, // Borda para dar destaque.
-    borderColor: '#BAE6FD', // Cor da borda (azul claro).
+    borderWidth: 2,
+    borderColor: '#BAE6FD',
   },
+
   statsValue: {
-    fontSize: 42, // Fonte bem grande para o número.
-    fontWeight: '900', // Extra negrito.
-    color: colors.primary, // Cor principal (azul).
+    fontSize: 42,
+    fontWeight: '900',
+    color: colors.primary,
   },
+
   statsLabel: {
     fontSize: 14,
     fontWeight: '600',
@@ -115,52 +107,84 @@ export const styles = StyleSheet.create<LerStyle>({
     marginTop: 5,
   },
 
-  // --- Formulário ---
+  // Formulário
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.textDark,
-    marginBottom: 15, // Espaço entre o título e os inputs.
+    marginBottom: 15,
     marginTop: 10,
   },
+
   inputContainer: {
-    marginBottom: 10, // Espaço entre o grupo de inputs e o botão.
+    marginBottom: 10,
   },
 
-  // --- Histórico ---
+  // Divisória e histórico
   divider: {
-    height: 2, // Altura da linha.
-    backgroundColor: '#F3F4F6', // Cor cinza claro para a linha.
+    height: 2,
+    backgroundColor: '#F3F4F6',
     width: '100%',
-    marginVertical: 25, // Espaço acima e abaixo da linha.
+    marginVertical: 25,
     borderRadius: 1,
   },
+
   historyList: {
-    gap: 15, // (Propriedade nova do RN) Espaçamento entre itens da lista.
+    gap: 15,
   },
+
   historyItem: {
-    backgroundColor: '#F9FAFB', // Fundo cinza bem claro para cada item.
+    backgroundColor: '#F9FAFB',
     borderRadius: 16,
     padding: 15,
-    borderWidth: 1, // Borda fina para definição.
+    borderWidth: 1,
     borderColor: '#E5E7EB',
   },
+
   bookTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.textDark,
     marginBottom: 4,
   },
+
   bookPages: {
     fontSize: 12,
-    color: colors.primary, // Destaque na cor azul.
+    color: colors.primary,
     fontWeight: 'bold',
     marginBottom: 8,
   },
+
   bookNote: {
     fontSize: 13,
     color: '#6B7280',
-    fontStyle: 'italic', // Texto em itálico para indicar citação/nota.
+    fontStyle: 'italic',
     lineHeight: 18,
   },
+
+  emptyMessage: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 16,
+    marginVertical: 20,
+  },
+
+  // ============================================================
+  // BOTÃO DE VOLTAR (cor azul padrão)
+  // ============================================================
+  backButton: {
+    marginTop: 10,
+    marginBottom: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignSelf: 'flex-start',
+  },
+
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary, // Azul padrão
+    textDecorationLine: 'underline',
+  },
+
 });

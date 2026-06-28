@@ -2,23 +2,20 @@ const { Habito, UsuarioHabito } = require("../models");
 
 const habitoController = {
   // ============================================================
-  // 1. LISTAR HÁBITOS ATIVOS
+  // 1. LISTAR HÁBITOS
   // ============================================================
   listarHabitos: async (req, res) => {
     try {
-      // Busca todos os hábitos que estão com a flag 'ativo' como verdadeira
-      const habitos = await Habito.findAll({ 
-        where: { ativo: true } 
-      });
+      // Busca todos os hábitos disponíveis no catálogo
+      const habitos = await Habito.findAll();
       
       return res.status(200).json(habitos);
     } catch (error) {
-      // Log detalhado para você e o Higor verem o erro exato do PostgreSQL no console
       console.error("[habitoController] Erro detalhado ao buscar hábitos:", error);
       
       return res.status(500).json({ 
         error: "Erro interno ao buscar hábitos.",
-        detalhe: error.message // Facilita a depuração na fase de desenvolvimento
+        detalhe: error.message
       });
     }
   },
@@ -30,7 +27,6 @@ const habitoController = {
     try {
       const { habitos_ids } = req.body;
       
-      // Captura o ID do usuário de forma segura através do token
       const usuarioId = req.usuario?.id || req.usuarioId; 
 
       if (!usuarioId) {
@@ -41,25 +37,19 @@ const habitoController = {
         return res.status(400).json({ error: "Nenhum hábito válido selecionado." });
       }
 
-      // -----------------------------------------------------------
-      // DICA DE OURO PARA HOJE À NOITE:
-      // Verifiquem se as tabelas usam snake_case (usuario_id) ou camelCase (usuarioId).
-      // Ajustem os mapeamentos abaixo de acordo com as propriedades do Model de vocês!
-      // -----------------------------------------------------------
-
-      // 1. Limpa a rotina anterior do usuário para atualizar com os novos hábitos ativos
+      // 1. Limpa a rotina anterior do usuário
       await UsuarioHabito.destroy({ 
         where: { usuario_id: usuarioId } 
       });
 
-      // 2. Prepara a lista de inserção em lote (Bulk)
+      // 2. Prepara a lista de inserção em lote
       const novaRotina = habitos_ids.map(id => ({
         usuario_id: usuarioId,
         habito_id: id,
         concluido: false
       }));
 
-      // 3. Insere todos os hábitos de uma só vez para máxima performance
+      // 3. Insere todos os hábitos de uma só vez
       await UsuarioHabito.bulkCreate(novaRotina);
 
       return res.status(201).json({ 
@@ -68,7 +58,6 @@ const habitoController = {
       });
 
     } catch (error) {
-      // Se der erro de chave estrangeira ou coluna inexistente, este log vai salvar a noite de vocês!
       console.error("[habitoController] Erro detalhado ao salvar a rotina:", error);
       
       return res.status(500).json({ 

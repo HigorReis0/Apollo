@@ -40,11 +40,11 @@ export const useSaudeBucal = () => {
 
     try {
       setLoading(true);
-      const sucesso = await registrarXP(idMotivo);
+      const resultado = await registrarXP(idMotivo);
 
-      if (sucesso) {
+      if (resultado.sucesso) {
         setter(true);
-        Alert.alert("Concluído!", mensagem);
+        Alert.alert("Concluído!", `${mensagem} +${resultado.xp_ganho} XP!`);
       } else {
         Alert.alert("Erro", "Não foi possível registrar o XP. Tente novamente.");
       }
@@ -59,7 +59,7 @@ export const useSaudeBucal = () => {
       escovacao,
       setEscovacao,
       MOTIVOS_XP.SAUDE_BUCAL,
-      "Dentes limpos e protegidos. XP registrado!"
+      "Dentes limpos e protegidos."
     );
 
   const alternarFioDental = () =>
@@ -67,7 +67,7 @@ export const useSaudeBucal = () => {
       fioDental,
       setFioDental,
       MOTIVOS_XP.SAUDE_BUCAL,
-      "Gengivas saudáveis e livres de impurezas. XP registrado!"
+      "Gengivas saudáveis e livres de impurezas."
     );
 
   const alternarEnxaguante = () =>
@@ -75,7 +75,7 @@ export const useSaudeBucal = () => {
       enxaguante,
       setEnxaguante,
       MOTIVOS_XP.SAUDE_BUCAL,
-      "Hálito fresco e proteção extra ativada. XP registrado!"
+      "Hálito fresco e proteção extra ativada."
     );
 
   // ============================================================
@@ -96,12 +96,17 @@ export const useSaudeBucal = () => {
 
     try {
       setLoading(true);
-      const sucesso = await registrarXP(MOTIVOS_XP.SAUDE_BUCAL_COMPLETA);
+      const resultado = await registrarXP(MOTIVOS_XP.SAUDE_BUCAL_COMPLETA);
 
-      if (sucesso) {
+      if (resultado.sucesso) {
         Alert.alert(
           "Sorriso Perfeito!",
-          "Rotina completa de higiene oral concluída! Bônus de XP registrado!"
+          `Rotina completa de higiene oral concluída! +${resultado.xp_ganho} XP de bônus!`
+        );
+      } else {
+        Alert.alert(
+          "Erro",
+          "Não foi possível registrar o bônus. Tente novamente."
         );
       }
     } finally {

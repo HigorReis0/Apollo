@@ -13,6 +13,14 @@ interface CorridaStyle {
   iconHeader: ImageStyle;
   title: TextStyle;
   subtitle: TextStyle;
+  metaContainer: ViewStyle;
+  metaLabel: TextStyle;
+  metaRow: ViewStyle;
+  metaInput: TextStyle;
+  metaButton: ViewStyle;
+  metaButtonText: TextStyle;
+  metaAtual: TextStyle;
+  metaAlcancada: TextStyle;
   progressContainer: ViewStyle;
   progressRow: ViewStyle;
   progressLabel: TextStyle;
@@ -28,22 +36,26 @@ interface CorridaStyle {
 
 export const styles = StyleSheet.create<CorridaStyle>({
   // Estilo para o fundo total da tela.
-  safeArea: { 
-    flex: 1, 
-    backgroundColor: colors.background 
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
   // Espaçamento interno do container de rolagem.
-  container: { 
-    padding: 20 
+  container: {
+    padding: 20,
   },
-  
-  // Estilo do botão de navegação "Voltar".
-  backButton: { 
-    marginBottom: 15 
+
+  // ============================================================
+  // BOTÃO DE VOLTAR (PADRÃO AZUL)
+  // ============================================================
+  backButton: {
+    marginBottom: 15,
   },
-  backButtonText: { 
-    color: '#F59E0B', // Tom de laranja para diferenciar da musculação/água.
-    fontWeight: 'bold' 
+  backButtonText: {
+    color: colors.primary, // Azul padrão
+    fontWeight: 'bold',
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
 
   // Estilo do card branco centralizado com sombra.
@@ -60,92 +72,163 @@ export const styles = StyleSheet.create<CorridaStyle>({
     shadowRadius: 10,
   },
   // Dimensões do ícone da atividade.
-  iconHeader: { 
-    width: 90, 
-    height: 90, 
-    marginBottom: 15 
+  iconHeader: {
+    width: 90,
+    height: 90,
+    marginBottom: 15,
   },
   // Estilo do título principal da tela.
-  title: { 
-    fontSize: 26, 
-    fontWeight: 'bold', 
-    color: colors.textDark 
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: colors.textDark,
   },
   // Estilo para a frase motivacional abaixo do título.
-  subtitle: { 
-    fontSize: 14, 
-    color: '#6B7280', 
-    textAlign: 'center', 
-    marginTop: 5, 
-    paddingHorizontal: 10 
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 5,
+    paddingHorizontal: 10,
   },
 
-  // Container para a barra de progresso.
-  progressContainer: { 
-    width: '100%', 
-    marginTop: 25 
-  },
-  // Alinha os textos da meta horizontalmente (esquerda/direita).
-  progressRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    marginBottom: 10 
-  },
-  progressLabel: { 
-    fontSize: 14, 
-    fontWeight: '600', 
-    color: '#4B5563' 
-  },
-  progressValue: { 
-    fontSize: 14, 
-    fontWeight: 'bold', 
-    color: '#F59E0B' 
-  },
-  // Estilo do trilho (fundo) da barra de progresso.
-  progressBarBackground: { 
-    height: 12, 
-    backgroundColor: '#E5E7EB', 
-    borderRadius: 6, 
-    overflow: 'hidden' 
-  },
-  // Estilo da cor de preenchimento da barra.
-  progressBarFill: { 
-    height: '100%', 
-    backgroundColor: '#F59E0B' 
+  // ============================================================
+  // SEÇÃO: META PERSONALIZADA (PADRÃO CINZA)
+  // ============================================================
+
+  metaContainer: {
+    marginTop: 10,
+    marginBottom: 15,
+    padding: 12,
+    backgroundColor: '#F3F4F6', // Cinza claro (padrão)
+    borderRadius: 12,
+    width: '100%',
   },
 
-  // Organiza os botões em formato de grade (2 colunas).
-  gridButtons: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    justifyContent: 'space-between' 
+  metaLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 6,
   },
-  // Estilo individual dos botões de ação (+KM).
-  actionButton: { 
-    width: '48%', 
-    backgroundColor: colors.white, 
-    padding: 20, 
-    borderRadius: 20, 
-    alignItems: 'center', 
+
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  metaInput: {
+    flex: 1,
+    height: 44,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    color: '#1F2937',
+  },
+
+  // Botão "Salvar" em azul padrão
+  metaButton: {
+    backgroundColor: colors.primary, // Azul padrão
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+
+  metaButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+  },
+
+  metaAtual: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 6,
+  },
+
+  // Mensagem de meta alcançada (ALTERADO: agora é AZUL)
+  metaAlcancada: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.primary, // Azul padrão (antes era verde)
+    marginTop: 8,
+    textAlign: 'center',
+  },
+
+  // ============================================================
+  // BARRA DE PROGRESSO (PADRÃO AZUL)
+  // ============================================================
+
+  progressContainer: {
+    width: '100%',
+    marginTop: 25,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  progressLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+  progressValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.primary, // Azul padrão
+  },
+  progressBarBackground: {
+    height: 12,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: colors.primary, // Azul padrão
+  },
+
+  // ============================================================
+  // GRID DE BOTÕES (+KM) - PADRÃO CINZA
+  // ============================================================
+
+  gridButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    width: '48%',
+    backgroundColor: colors.white,
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#FEF3C7' // Borda em tom de laranja suave.
+    borderColor: '#E5E7EB', // Cinza padrão
   },
-  actionButtonText: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
-    color: colors.textDark 
+  actionButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textDark,
   },
 
-  // Botão de reset no rodapé da tela.
-  resetButton: { 
-    marginTop: 10, 
-    marginBottom: 30, 
-    alignItems: 'center' 
+  // ============================================================
+  // BOTÃO DE RESET (PADRÃO CINZA)
+  // ============================================================
+
+  resetButton: {
+    marginTop: 10,
+    marginBottom: 30,
+    alignItems: 'center',
   },
-  resetButtonText: { 
-    color: '#9CA3AF', 
-    fontSize: 14, 
-    textDecorationLine: 'underline' 
-  }
+  resetButtonText: {
+    color: '#9CA3AF',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
 });

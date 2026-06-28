@@ -36,7 +36,7 @@ const Leitura = sequelize.define(
       field: "pag_lidas"
     },
     nota_leitura: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.TEXT,
       allowNull: true,
       field: "nota_leitura"
     },
