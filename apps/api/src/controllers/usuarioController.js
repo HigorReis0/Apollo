@@ -10,16 +10,19 @@ const bcrypt = require("bcryptjs");
 const fs = require("fs");
 const path = require("path");
 
-// Google OAuth2: autenticação com Google
+// Google OAuth2: autenticação com Google (login social)
 const { OAuth2Client } = require("google-auth-library");
 
-// jwt: geração de tokens de autenticação
+// jwt: geração de tokens de autenticação (JSON Web Tokens)
 const jwt = require("jsonwebtoken");
+
+// Operadores do Sequelize (para consultas avançadas, como Op.notIn)
+const { Op } = require("sequelize");
 
 // Inicializa o cliente do Google com o Client ID do .env
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Diretório onde os avatars serão salvos
+// Diretório onde os avatars serão salvos (uploads/)
 const uploadDir = path.join(__dirname, "..", "..", "uploads");
 
 // Cria o diretório se ele não existir
@@ -31,12 +34,26 @@ if (!fs.existsSync(uploadDir)) {
 
 module.exports = {
 
-  // ========= CREATE (CADASTRO MANUAL) =========
+  // ============================================================
+  // MÉTODO: criar (CADASTRO MANUAL)
   // Rota: POST /usuarios
-  // Cria um novo usuário com nome, email, senha e avatar (opcional)
+  // ============================================================
+  /*
+    O QUE FAZ?
+    - Cria um novo usuário com nome, email, senha e avatar (opcional).
+    - Gera um token JWT automaticamente, para o usuário já entrar logado.
+    - Remove a senha do objeto retornado para não expor o hash.
+
+    POR QUE ISSO É IMPORTANTE?
+    - Evita que o usuário precise fazer login após o cadastro (melhor UX).
+    - A senha é hasheada com bcrypt antes de salvar (segurança).
+
+    BOA PRÁTICA:
+    - "Fail Fast": validamos os dados antes de qualquer operação.
+    - Removemos a senha do objeto retornado.
+  */
   async criar(req, res) {
     try {
-      // Extrai os dados enviados pelo frontend
       const { nome, email, senha, google_id } = req.body;
 
       // Validação: nome, email e ao menos uma forma de autenticação são obrigatórios
@@ -88,49 +105,71 @@ module.exports = {
     }
   },
 
-  // ========= LOGIN CONVENCIONAL (E-MAIL/SENHA) =========
+  // ============================================================
+  // MÉTODO: login (E-MAIL/SENHA)
   // Rota: POST /usuarios/login
+  // ============================================================
+  /*
+    O QUE FAZ?
+    - Autentica o usuário com email e senha.
+    - Retorna um token JWT se as credenciais estiverem corretas.
+
+    POR QUE ISSO É IMPORTANTE?
+    - O token JWT é usado para autorizar o usuário em todas as rotas protegidas.
+    - A comparação de senha usa bcrypt.compare (seguro contra ataques de timing).
+
+    BOA PRÁTICA:
+    - Mensagem genérica de erro para evitar enumeração de usuários.
+  */
   async login(req, res) {
     try {
       const { email, senha } = req.body;
 
-      // Busca o usuário pelo email
       const usuario = await Usuario.findOne({ where: { email } });
       if (!usuario) return res.status(401).json({ erro: "E-mail ou senha inválidos" });
 
-      // Se o usuário tem apenas login com Google, avisa
       if (!usuario.senha && usuario.google_id) {
         return res.status(401).json({ erro: "Use o login com Google para esta conta." });
       }
 
-      // Compara a senha fornecida com o hash armazenado
       const senhaValida = await bcrypt.compare(senha, usuario.senha);
       if (!senhaValida) return res.status(401).json({ erro: "E-mail ou senha inválidos" });
 
-      // Gera o token JWT
       const token = jwt.sign(
         { usuario_id: usuario.usuario_id },
         process.env.JWT_SECRET,
         { expiresIn: "7d" }
       );
 
-      // Remove a senha do objeto retornado
       const userJSON = usuario.toJSON();
       delete userJSON.senha;
-
       return res.json({ usuario: userJSON, token });
     } catch (error) {
       return res.status(500).json({ erro: error.message });
     }
   },
 
-  // ========= LOGIN COM GOOGLE =========
+  // ============================================================
+  // MÉTODO: loginGoogle (LOGIN COM GOOGLE)
   // Rota: POST /usuarios/login-google
+  // ============================================================
+  /*
+    O QUE FAZ?
+    - Autentica o usuário via Google OAuth2.
+    - Se o usuário já existe, vincula o Google ID à conta.
+    - Se não existe, cria uma nova conta com os dados do Google.
+
+    POR QUE ISSO É IMPORTANTE?
+    - Oferece uma alternativa de login sem senha (melhor UX).
+    - Integra com a conta Google do usuário.
+
+    BOA PRÁTICA:
+    - Verificamos o ID token com o cliente Google (evita tokens falsos).
+  */
   async loginGoogle(req, res) {
     try {
       const { idToken } = req.body;
 
-      // Verifica o token do Google
       const ticket = await client.verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_ID
@@ -138,35 +177,29 @@ module.exports = {
       const payload = ticket.getPayload();
       const { sub: google_id, email, name: nome, picture: avatar_url } = payload;
 
-      // Procura o usuário pelo google_id
       let usuario = await Usuario.findOne({ where: { google_id } });
 
       if (!usuario) {
-        // Se não encontrou, tenta pelo email (vincula a conta existente)
         usuario = await Usuario.findOne({ where: { email } });
         if (usuario) {
-          // Vincula o google_id à conta existente
           await usuario.update({ google_id, avatar_url: avatar_url ?? usuario.avatar_url });
         } else {
-          // Cria um novo usuário com os dados do Google
           usuario = await Usuario.create({
             nome,
             email,
             google_id,
             avatar_url,
-            senha: null // sem senha, pois login é via Google
+            senha: null
           });
         }
       }
 
-      // Gera o token JWT
       const token = jwt.sign(
         { usuario_id: usuario.usuario_id },
         process.env.JWT_SECRET,
         { expiresIn: "7d" }
       );
 
-      // Remove a senha (se existir) e retorna
       const userJSON = usuario.toJSON();
       delete userJSON.senha;
       return res.json({ usuario: userJSON, token });
@@ -175,17 +208,27 @@ module.exports = {
     }
   },
 
-  // ========= LISTAR TODOS OS USUÁRIOS =========
+  // ============================================================
+  // MÉTODO: listar (LISTAR TODOS OS USUÁRIOS)
   // Rota: GET /usuarios (protegida)
+  // ============================================================
+  /*
+    O QUE FAZ?
+    - Retorna todos os usuários cadastrados (excluindo senhas).
+    - Constrói URLs completas para os avatars.
+
+    POR QUE ISSO É IMPORTANTE?
+    - Útil para administração ou para listar amigos.
+
+    BOA PRÁTICA:
+    - Excluímos o campo senha (segurança).
+    - Adicionamos a URL completa do avatar.
+  */
   async listar(req, res) {
     try {
-      // Busca todos os usuários, excluindo o campo senha
       const usuarios = await Usuario.findAll({ attributes: { exclude: ["senha"] } });
-
-      // Constrói a URL base para os avatars
       const baseUrl = `${req.protocol}://${req.get("host")}`;
 
-      // Mapeia os usuários para incluir a URL completa do avatar
       const resultado = usuarios.map(u => {
         const user = u.toJSON();
         if (user.avatar_url && !user.avatar_url.startsWith("http")) {
@@ -199,17 +242,17 @@ module.exports = {
     }
   },
 
-  // ========= BUSCAR USUÁRIO POR ID =========
+  // ============================================================
+  // MÉTODO: buscarPorId (BUSCAR USUÁRIO POR ID)
   // Rota: GET /usuarios/:id (protegida)
+  // ============================================================
   async buscarPorId(req, res) {
     try {
       const { id } = req.params;
 
-      // Busca o usuário pelo ID, excluindo a senha
       const usuario = await Usuario.findByPk(id, { attributes: { exclude: ["senha"] } });
       if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado" });
 
-      // Adiciona a URL completa do avatar
       const baseUrl = `${req.protocol}://${req.get("host")}`;
       const user = usuario.toJSON();
       if (user.avatar_url && !user.avatar_url.startsWith("http")) {
@@ -221,21 +264,29 @@ module.exports = {
     }
   },
 
-  // ========= ATUALIZAR USUÁRIO (nome, email, senha, avatar) =========
+  // ============================================================
+  // MÉTODO: atualizar (ATUALIZAR USUÁRIO)
   // Rota: PUT /usuarios/:id (protegida)
+  // ============================================================
+  /*
+    O QUE FAZ?
+    - Atualiza nome, email, senha e avatar do usuário.
+    - Substitui o avatar antigo pelo novo (remove do disco).
+
+    BOA PRÁTICA:
+    - Se o avatar for atualizado, remove o arquivo antigo para não acumular lixo.
+  */
   async atualizar(req, res) {
     try {
       const { id } = req.params;
       const { nome, email, senha } = req.body;
 
-      // Busca o usuário
       const usuario = await Usuario.findByPk(id);
       if (!usuario) {
         if (req.file) fs.unlinkSync(req.file.path);
         return res.status(404).json({ erro: "Usuário não encontrado" });
       }
 
-      // Se veio um novo avatar, substitui o antigo
       let novoAvatar = usuario.avatar_url;
       if (req.file) {
         if (usuario.avatar_url) {
@@ -245,7 +296,6 @@ module.exports = {
         novoAvatar = `/uploads/${req.file.filename}`;
       }
 
-      // Atualiza os campos fornecidos
       await usuario.update({
         nome: nome ?? usuario.nome,
         email: email ?? usuario.email,
@@ -253,7 +303,6 @@ module.exports = {
         avatar_url: novoAvatar,
       });
 
-      // Remove a senha e retorna
       const user = usuario.toJSON();
       delete user.senha;
       return res.json(user);
@@ -262,15 +311,22 @@ module.exports = {
     }
   },
 
-  // ========= PERFIL DO USUÁRIO LOGADO =========
+  // ============================================================
+  // MÉTODO: perfil (PERFIL DO USUÁRIO LOGADO)
   // Rota: GET /usuarios/perfil (protegida)
-  // Retorna os dados do usuário autenticado (sem senha)
+  // ============================================================
+  /*
+    O QUE FAZ?
+    - Retorna os dados do usuário autenticado (sem senha).
+    - Inclui os novos campos: data_nascimento, peso, altura.
+
+    POR QUE ISSO É IMPORTANTE?
+    - É a principal fonte de dados para a tela de Perfil.
+  */
   async perfil(req, res) {
     try {
-      // O ID do usuário vem do middleware auth (req.usuarioId)
       const usuarioId = req.usuarioId;
 
-      // Busca o usuário, excluindo a senha
       const usuario = await Usuario.findByPk(usuarioId, {
         attributes: { exclude: ["senha"] }
       });
@@ -278,7 +334,6 @@ module.exports = {
         return res.status(404).json({ erro: "Usuário não encontrado" });
       }
 
-      // Adiciona a URL completa do avatar
       const baseUrl = `${req.protocol}://${req.get("host")}`;
       const user = usuario.toJSON();
       if (user.avatar_url && !user.avatar_url.startsWith("http")) {
@@ -291,33 +346,39 @@ module.exports = {
   },
 
   // ============================================================
-  // ENDPOINT: ATUALIZAR DADOS PESSOAIS
+  // MÉTODO: atualizarDadosPessoais (ATUALIZAR DADOS PESSOAIS)
   // Rota: PUT /usuarios/dados-pessoais (protegida)
   // ============================================================
+  /*
+    O QUE FAZ?
+    - Atualiza data_nascimento, peso e altura do usuário.
+
+    POR QUE ISSO É IMPORTANTE?
+    - Permite ao usuário preencher/editar seus dados pessoais.
+
+    BOA PRÁTICA:
+    - Validação do formato da data (YYYY-MM-DD) antes de salvar.
+  */
   async atualizarDadosPessoais(req, res) {
     try {
       const usuarioId = req.usuarioId;
       const { data_nascimento, peso, altura } = req.body;
 
-      // Busca o usuário
       const usuario = await Usuario.findByPk(usuarioId);
       if (!usuario) {
         return res.status(404).json({ erro: "Usuário não encontrado" });
       }
 
-      // Validação do formato da data (YYYY-MM-DD)
       if (data_nascimento && !/^\d{4}-\d{2}-\d{2}$/.test(data_nascimento)) {
         return res.status(400).json({ erro: "Formato de data inválido. Use AAAA-MM-DD." });
       }
 
-      // Atualiza apenas os campos fornecidos
       await usuario.update({
         data_nascimento: data_nascimento || null,
         peso: peso !== undefined && peso !== null ? parseFloat(peso) : null,
         altura: altura !== undefined && altura !== null ? parseFloat(altura) : null,
       });
 
-      // Recarrega o usuário atualizado (sem senha)
       const usuarioAtualizado = await Usuario.findByPk(usuarioId, {
         attributes: { exclude: ["senha"] }
       });
@@ -330,43 +391,99 @@ module.exports = {
   },
 
   // ============================================================
-  // ENDPOINT: BUSCAR HÁBITOS RECENTES (ÚLTIMOS 4 CONCLUÍDOS)
+  // MÉTODO: habitosRecentes (ÚLTIMOS 4 HÁBITOS CONCLUÍDOS, SEM METAS)
   // Rota: GET /usuarios/habitos-recentes (protegida)
   // ============================================================
-  // ATENÇÃO: Agora filtra apenas hábitos com status = 'concluido'
-  // Isso garante que apareçam apenas os hábitos em que o usuário
-  // realmente atingiu a meta, não apenas registros intermediários.
+  /*
+    O QUE FAZ?
+    - Retorna os 4 hábitos mais recentes que o usuário concluiu (bateu a meta).
+    - Exclui os motivos de "meta" (bônus) para evitar duplicatas.
+      Exemplo: se o usuário fez "Musculação" e "Meta Musculação", apenas "Musculação" aparece.
+
+    POR QUE EXCLUIR AS METAS?
+    - Para manter a lista mais limpa e representativa.
+    - O usuário vê apenas o hábito base (ex: "Musculação") em vez de duas entradas.
+
+    COMO FUNCIONA?
+    1. Busca os últimos 10 logs de XP, ignorando os IDs de meta.
+    2. Agrupa por motivo (mantém o mais recente de cada).
+    3. Pega os 4 primeiros e formata para o frontend.
+
+    POR QUE BUSCAR NO tab_xp_log?
+    - É a fonte definitiva de hábitos concluídos (só registra quando a meta é batida).
+  */
   async habitosRecentes(req, res) {
     try {
       const usuarioId = req.usuarioId;
 
-      // Importa os models relacionados
-      const { UsuarioHabito, Habito } = require("../models");
+      // Importa os models necessários
+      const { XpLog, Motivo } = require("../models");
 
-      // Busca os últimos 4 registros de hábitos CONCLUÍDOS
-      // Filtra por usuario_id e status = 'concluido'
-      const registros = await UsuarioHabito.findAll({
+      // IDs dos motivos que representam "meta batida" (bônus)
+      // Eles serão excluídos da lista para evitar duplicatas.
+      const IDs_META = [3, 5, 9, 11, 15, 17, 21]; // conforme sua tab_motivo
+
+      // 1. Busca os últimos 10 logs, excluindo as metas
+      const logs = await XpLog.findAll({
         where: {
           usuario_id: usuarioId,
-          status: 'concluido'    // <-- FILTRO ADICIONADO: apenas hábitos concluídos (meta batida)
+          id_motivo: { [Op.notIn]: IDs_META }  // <-- FILTRO PARA REMOVER METAS
         },
         include: [
           {
-            model: Habito,
-            as: 'habito',
-            attributes: ['habito_id', 'nome', 'icone_url']
+            model: Motivo,
+            as: 'motivo',
+            attributes: ['motivo_id', 'nome_motivo', 'descricao']
           }
         ],
-        order: [['data_execucao', 'DESC']], // Mais recentes primeiro
-        limit: 4                            // Apenas os 4 últimos
+        order: [['data_hora', 'DESC']],
+        limit: 10
       });
 
-      // Mapeia os resultados para o formato esperado pelo frontend
-      const habitos = registros.map(r => ({
-        id: r.habito?.habito_id || 0,
-        label: r.habito?.nome || 'Hábito',
-        image: r.habito?.icone_url || null
-      }));
+      // 2. Agrupa manualmente por motivo (mantém o mais recente de cada)
+      //    Usamos um Map para garantir que cada motivo apareça apenas uma vez.
+      const mapaPorMotivo = new Map();
+      logs.forEach(log => {
+        const motivoId = log.motivo?.motivo_id;
+        if (!motivoId) return;
+        if (!mapaPorMotivo.has(motivoId)) {
+          mapaPorMotivo.set(motivoId, log);
+        }
+        // Como os logs já estão ordenados por data_hora DESC, o primeiro que
+        // encontrarmos de cada motivo já é o mais recente.
+      });
+
+      // 3. Converte o mapa para array e pega os primeiros 4
+      const logsUnicos = Array.from(mapaPorMotivo.values()).slice(0, 4);
+
+      // Mapeamento para nomes amigáveis de hábitos (ex: 'LEITURA' -> 'Leitura')
+      const mapaHabitos = {
+        'ARRUMAR_CAMA': { label: 'Arrumar a Cama' },
+        'REGISTRO_AGUA': { label: 'Beber Água' },
+        'LEITURA': { label: 'Leitura' },
+        'MEDITACAO': { label: 'Meditação' },
+        'CORRIDA': { label: 'Corrida' },
+        'MUSCULACAO': { label: 'Musculação' },
+        'SAUDE_BUCAL': { label: 'Saúde Bucal' },
+        'SAUDE_BUCAL_COMPLETA': { label: 'Rotina Bucal Completa' },
+        'SONO_REGULADO': { label: 'Sono Regulado' }
+      };
+
+      // 4. Mapeia cada log para o formato esperado pelo frontend
+      const habitos = logsUnicos.map(log => {
+        const nomeMotivo = log.motivo?.nome_motivo || '';
+        const info = mapaHabitos[nomeMotivo] || { 
+          label: nomeMotivo.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
+        };
+
+        return {
+          id: log.motivo?.motivo_id || 0,
+          label: info.label,
+          xp: log.xp_ganho || 0,
+          image: null, // será tratado pelo fallback no frontend
+          mensagem: log.motivo?.descricao || `+${log.xp_ganho || 0} XP`
+        };
+      });
 
       return res.json(habitos);
     } catch (error) {
@@ -375,24 +492,29 @@ module.exports = {
     }
   },
 
-  // ========= DELETE =========
+  // ============================================================
+  // MÉTODO: deletar (DELETAR USUÁRIO)
   // Rota: DELETE /usuarios/:id (protegida)
-  // Remove o usuário (e seu avatar do disco)
+  // ============================================================
+  /*
+    O QUE FAZ?
+    - Remove o usuário do banco e também seu avatar do disco.
+
+    BOA PRÁTICA:
+    - Remove o arquivo de avatar do disco para não acumular lixo.
+  */
   async deletar(req, res) {
     try {
       const { id } = req.params;
 
-      // Busca o usuário
       const usuario = await Usuario.findByPk(id);
       if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado" });
 
-      // Remove o avatar do disco (se existir)
       if (usuario.avatar_url) {
         const fotoPath = path.join(__dirname, "..", "..", usuario.avatar_url);
         if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
       }
 
-      // Remove o usuário do banco
       await usuario.destroy();
       return res.json({ sucesso: true, mensagem: "Conta removida" });
     } catch (error) {

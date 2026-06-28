@@ -2,69 +2,84 @@
 // IMPORTAÇÕES
 // ============================================================
 
-// Importa o React e os componentes básicos do React Native
+// React é a biblioteca principal para criar interfaces.
 import React from 'react';
+
+// Componentes básicos do React Native para construção da interface.
 import {
-  View,
-  Text,
-  Image,
-  SafeAreaView,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Modal,
-  TextInput,
+  View,              // Contêiner flexível (como uma div).
+  Text,              // Para exibir textos (TODO texto precisa estar dentro de <Text>).
+  Image,             // Para exibir imagens (locais ou da internet).
+  SafeAreaView,      // Garante que o conteúdo não fique sob a barra de status.
+  ScrollView,        // Permite rolagem vertical quando o conteúdo é maior que a tela.
+  TouchableOpacity,  // Botão com feedback visual ao toque (opacidade).
+  ActivityIndicator, // Ícone de carregamento (spinner).
+  Modal,             // Janela flutuante para edição.
+  TextInput,         // Campo de entrada de texto.
 } from 'react-native';
 
-// Importa os estilos específicos da tela de Perfil
+// Estilos específicos da tela de Perfil (definidos em perfil.styles.ts).
 import { styles } from './perfil.styles';
 
-// Importa o componente Header (cabeçalho reutilizável)
+// Componente Header: cabeçalho reutilizável (com o título do app, ícone, etc.).
 import { Header } from '../../components/Header';
 
-// Importa o hook usePerfil (toda a lógica de estado e chamadas à API)
+// Hook usePerfil: contém toda a lógica de negócio (buscar dados, editar, etc.).
+// A View é "burra": ela só exibe os dados e chama as funções que vêm do hook.
 import { usePerfil } from './usePerfil';
 
-// Imagem de fallback para o avatar (caso o usuário não tenha foto)
-// @ts-ignore
+// Imagem de fallback para o avatar (usada quando o usuário não tem foto).
+// @ts-ignore (ignora erro de importação de imagem no TypeScript)
 import imgPerfil from '../../../assets/imagemExemploPerfil.png';
 
 // ============================================================
 // COMPONENTE PRINCIPAL: ProfileView
 // ============================================================
 
-// Este componente renderiza a tela de Perfil, consumindo os dados
-// e funções do hook usePerfil. Ele exibe:
-// - Avatar, nome, e-mail, barra de progresso do nível
-// - Dados pessoais com botão de edição (✎) para abrir modal específico
-// - Conquistas desbloqueadas (apenas ícones, sem texto)
-// - Últimos 4 hábitos acessados (ou mensagem vazia)
-// - Modal para editar o nome (botão "Editar Perfil")
-// - Modal para editar dados pessoais (botão ✎) com máscara de data
+/*
+  O QUE É ESTE COMPONENTE?
+  - É a "tela de Perfil" do usuário.
+  - Ele é responsável por RENDERIZAR a interface, ou seja,
+    transformar os dados (vindos do hook) em elementos visuais.
+  - NÃO contém lógica de negócio (como buscar dados, salvar, etc.) –
+    isso fica no hook usePerfil. Esta é uma boa prática de
+    separação de responsabilidades (Clean Architecture).
+
+  O QUE ELE EXIBE?
+  1. Avatar, nome, e-mail e barra de progresso do nível.
+  2. Dados pessoais (data de nascimento, idade, peso, altura) com botão de edição.
+  3. Conquistas desbloqueadas (medalhas sem texto).
+  4. Últimos 4 hábitos acessados em formato de LISTA VERTICAL (SEM ÍCONES).
+  5. Modal para editar o nome (botão "Editar Perfil").
+  6. Modal para editar dados pessoais (botão "✎").
+*/
 export default function ProfileView() {
-  // Extrai todos os dados e funções do hook
+  // ============================================================
+  // EXTRAÇÃO DOS DADOS E FUNÇÕES DO HOOK
+  // ============================================================
+
   const {
-    perfil,                      // Dados do perfil (nome, email, XP, nível)
-    isLoading,                   // Booleano: está carregando?
+    perfil,                      // Dados do perfil (nome, email, XP, nível, etc.)
+    isLoading,                   // Booleano: true enquanto carrega os dados
     error,                       // Mensagem de erro (se houver)
-    personalData,                // Dados pessoais formatados para exibição
-    conquistasDesbloqueadas,     // Conquistas desbloqueadas (array)
-    habitosRecentes,             // Últimos hábitos acessados (array)
-    
-    // Modal de edição de nome
+    personalData,                // Array com os dados pessoais formatados (exibição)
+    conquistasDesbloqueadas,     // Array com as conquistas que o usuário já tem
+    habitosRecentes,             // Array com os 4 hábitos mais recentes
+
+    // ---- Modal de edição de nome ----
     editNomeModalVisible,
     setEditNomeModalVisible,
     editNome,
     setEditNome,
     salvarNome,
     abrirModalNome,
-    
-    // Modal de edição de dados pessoais
+
+    // ---- Modal de edição de dados pessoais ----
     editDadosModalVisible,
     setEditDadosModalVisible,
     editDataNascimento,
     setEditDataNascimento,
-    aplicarMascaraData,          // Função para formatar a data com barras
+    aplicarMascaraData,          // Função que formata a data com barras (DD/MM/AAAA)
     editPeso,
     setEditPeso,
     editAltura,
@@ -73,8 +88,11 @@ export default function ProfileView() {
     abrirModalDados,
   } = usePerfil();
 
-  // ---- TELA DE CARREGAMENTO ----
-  // Exibe um spinner enquanto os dados estão sendo carregados
+  // ============================================================
+  // RENDERIZAÇÃO CONDICIONAL (CARREGAMENTO E ERRO)
+  // ============================================================
+
+  // Se os dados ainda estão sendo carregados, exibe um spinner.
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -85,8 +103,7 @@ export default function ProfileView() {
     );
   }
 
-  // ---- TELA DE ERRO ----
-  // Exibe uma mensagem de erro se algo deu errado ao carregar os dados
+  // Se houve erro ao carregar os dados, exibe mensagem e botão para tentar novamente.
   if (error) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -100,42 +117,56 @@ export default function ProfileView() {
     );
   }
 
-  // ---- BARRA DE PROGRESSO ----
-  // Calcula a porcentagem de XP em relação ao próximo nível
+  // ============================================================
+  // CÁLCULOS AUXILIARES
+  // ============================================================
+
+  // Calcula a porcentagem de preenchimento da barra de progresso.
   const xpPercentage = perfil && perfil.xp_proximo_nivel
     ? `${(perfil.total_xp / perfil.xp_proximo_nivel) * 100}%` as import('react-native').DimensionValue
     : '0%';
 
   // ============================================================
-  // RENDERIZAÇÃO DA INTERFACE
+  // FUNÇÃO AUXILIAR PARA O AVATAR (EVITA ERROS)
+  // ============================================================
+
+  // Retorna a fonte correta para o avatar:
+  // - Se o usuário tem uma URL de avatar (string válida), usa ela.
+  // - Senão, usa a imagem de fallback local.
+  const getAvatarSource = () => {
+    if (perfil?.avatar_url && typeof perfil.avatar_url === 'string' && perfil.avatar_url.trim() !== '') {
+      return { uri: perfil.avatar_url };
+    }
+    return imgPerfil;
+  };
+
+  // ============================================================
+  // RENDERIZAÇÃO PRINCIPAL (INTERFACE DA TELA)
   // ============================================================
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         
-        {/* HEADER – componente reutilizável (título, ícone) */}
+        {/* ============================================================
+            CABEÇALHO (HEADER)
+            ============================================================ */}
         <View style={{ paddingHorizontal: 20 }}>
           <Header />
         </View>
 
         {/* ============================================================
-            SEÇÃO: AVATAR, NOME, E-MAIL E BARRA DE XP
+            SEÇÃO 1: AVATAR, NOME, E-MAIL E BARRA DE XP
             ============================================================ */}
         <View style={styles.headerContainer}>
           <View style={styles.avatarContainer}>
-            {/* Exibe a foto do perfil (se houver) ou a imagem de fallback */}
-            <Image
-              source={perfil?.avatar_url ? { uri: perfil.avatar_url } : imgPerfil}
-              style={styles.avatar}
-            />
+            <Image source={getAvatarSource()} style={styles.avatar} />
           </View>
 
-          {/* Nome e e-mail do usuário */}
           <Text style={styles.name}>{perfil?.nome || 'Usuário'}</Text>
           <Text style={styles.email}>{perfil?.email || ''}</Text>
 
-          {/* Barra de Progresso do Nível */}
+          {/* Barra de progresso do nível */}
           <View style={styles.levelContainer}>
             <Text style={styles.levelText}>Nível {perfil?.nivel || 'Iniciante'}</Text>
             <View style={styles.progressBarBackground}>
@@ -154,10 +185,9 @@ export default function ProfileView() {
         </View>
 
         {/* ============================================================
-            CARTÃO 1: DADOS PESSOAIS (com botão de edição para dados pessoais)
+            CARTÃO 1: DADOS PESSOAIS
             ============================================================ */}
         <View style={styles.mainCard}>
-          {/* Cabeçalho do cartão: título + ícone de lápis */}
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Dados Pessoais</Text>
             {/* Botão de edição (lápis) – abre o modal de dados pessoais */}
@@ -165,8 +195,6 @@ export default function ProfileView() {
               <Text style={styles.editIconText}>✎</Text>
             </TouchableOpacity>
           </View>
-          
-          {/* Grid com os dados pessoais (2 colunas) */}
           <View style={styles.dataGrid}>
             {personalData.map((item, index) => (
               <View key={index} style={styles.dataItem}>
@@ -178,20 +206,18 @@ export default function ProfileView() {
         </View>
 
         {/* ============================================================
-            CARTÃO 2: CONQUISTAS (apenas ícones, sem textos)
+            CARTÃO 2: CONQUISTAS
             ============================================================ */}
         <View style={styles.mainCard}>
           <Text style={styles.cardTitle}>Conquistas</Text>
           <View style={styles.achievementsGrid}>
             {conquistasDesbloqueadas.length > 0 ? (
-              // Se houver conquistas desbloqueadas, exibe os ícones
               conquistasDesbloqueadas.map((item, index) => (
                 <View key={index} style={styles.achievementItem}>
                   <Image source={item.icon} style={styles.achievementIcon} resizeMode="contain" />
                 </View>
               ))
             ) : (
-              // Se não houver, exibe uma mensagem informativa
               <Text style={styles.emptyMessage}>
                 Continue completando hábitos para desbloquear conquistas!
               </Text>
@@ -200,25 +226,36 @@ export default function ProfileView() {
         </View>
 
         {/* ============================================================
-            CARTÃO 3: ÚLTIMOS ACESSOS (antigo "Meus Hábitos")
-            ============================================================ */}
+            CARTÃO 3: ÚLTIMOS ACESSOS (LISTA VERTICAL SEM ÍCONES)
+            ============================================================
+
+            POR QUE REMOVER OS ÍCONES?
+            - Deixa o layout mais limpo e direto.
+            - Foca a atenção do usuário no nome do hábito e no XP ganho.
+            - Evita repetição visual (os ícones dos hábitos já aparecem em outras telas).
+
+            O layout agora é:
+            - Nome do hábito (em negrito, tamanho 16)
+            - XP ganho (em azul, tamanho 14)
+            - Cada item ocupa uma linha inteira, com fundo cinza claro e borda arredondada.
+        */}
         <View style={styles.mainCard}>
           <Text style={styles.cardTitle}>Últimos Acessos</Text>
-          <View style={styles.habitsGrid}>
+          <View style={styles.habitsList}>
             {habitosRecentes.length > 0 ? (
-              // Se houver hábitos recentes, exibe em grid (2 colunas)
+              // Mapeia cada hábito e renderiza como um item vertical (sem imagem)
               habitosRecentes.map((habit, index) => (
-                <View key={index} style={styles.habitItem}>
-                  <Image
-                    source={habit.image ? { uri: habit.image } : require('../../../assets/musculacao.png')}
-                    style={styles.habitImage}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.habitLabel}>{habit.label}</Text>
+                <View key={index} style={styles.habitItemVertical}>
+                  {/* Container das informações (nome + XP) – agora ocupa 100% da largura */}
+                  <View style={styles.habitInfoVertical}>
+                    <Text style={styles.habitLabelVertical}>{habit.label}</Text>
+                    <Text style={styles.habitXpVertical}>
+                      {habit.mensagem || `+${habit.xp} XP`}
+                    </Text>
+                  </View>
                 </View>
               ))
             ) : (
-              // Se não houver, exibe mensagem vazia
               <Text style={styles.emptyMessage}>
                 Nenhum hábito acessado ainda.
               </Text>
@@ -238,8 +275,6 @@ export default function ProfileView() {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Editar Nome</Text>
-              
-              {/* Campo para editar o nome */}
               <TextInput
                 style={styles.modalInput}
                 value={editNome}
@@ -247,8 +282,6 @@ export default function ProfileView() {
                 placeholder="Digite seu nome"
                 placeholderTextColor="#9CA3AF"
               />
-              
-              {/* Botões Cancelar / Salvar */}
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.modalButtonCancel]}
@@ -268,7 +301,7 @@ export default function ProfileView() {
         </Modal>
 
         {/* ============================================================
-            MODAL 2: EDITAR DADOS PESSOAIS (com máscara de data)
+            MODAL 2: EDITAR DADOS PESSOAIS
             ============================================================ */}
         <Modal
           visible={editDadosModalVisible}
@@ -288,9 +321,9 @@ export default function ProfileView() {
                 placeholder="Data de Nascimento (DD/MM/AAAA)"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
-                maxLength={10} // DD/MM/AAAA tem 10 caracteres
+                maxLength={10}
               />
-              
+
               {/* Campo: Peso (kg) */}
               <TextInput
                 style={styles.modalInput}
@@ -300,8 +333,8 @@ export default function ProfileView() {
                 placeholderTextColor="#9CA3AF"
                 keyboardType="decimal-pad"
               />
-              
-              {/* Campo: Altura (em centímetros) */}
+
+              {/* Campo: Altura (cm) */}
               <TextInput
                 style={styles.modalInput}
                 value={editAltura}
@@ -311,7 +344,6 @@ export default function ProfileView() {
                 keyboardType="numeric"
               />
 
-              {/* Botões Cancelar / Salvar */}
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.modalButtonCancel]}
