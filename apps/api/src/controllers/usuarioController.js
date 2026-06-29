@@ -265,30 +265,64 @@ module.exports = {
   },
 
   // ============================================================
-  // MÉTODO: atualizar (ATUALIZAR USUÁRIO)
+  // MÉTODO: atualizar (ATUALIZAR USUÁRIO – COM SUPORTE A BASE64)
   // Rota: PUT /usuarios/:id (protegida)
   // ============================================================
   /*
     O QUE FAZ?
     - Atualiza nome, email, senha e avatar do usuário.
+    - Agora suporta duas formas de envio de avatar:
+      a) Via FormData (multer) → usa req.file (upload tradicional)
+      b) Via JSON → usa avatar_base64 (enviado como string base64)
     - Substitui o avatar antigo pelo novo (remove do disco).
 
     BOA PRÁTICA:
     - Se o avatar for atualizado, remove o arquivo antigo para não acumular lixo.
+    - Compatível com ambas as abordagens (FormData e JSON).
   */
   async atualizar(req, res) {
     try {
       const { id } = req.params;
-      const { nome, email, senha } = req.body;
+      // Extrai os campos do corpo da requisição (incluindo avatar_base64)
+      const { nome, email, senha, avatar_base64 } = req.body;
 
+      // Busca o usuário
       const usuario = await Usuario.findByPk(id);
       if (!usuario) {
+        // Se veio um arquivo de avatar, remove do disco (limpeza)
         if (req.file) fs.unlinkSync(req.file.path);
         return res.status(404).json({ erro: "Usuário não encontrado" });
       }
 
+      // Inicializa o novo avatar com o valor atual (para manter se não for alterado)
       let novoAvatar = usuario.avatar_url;
+
+      // ============================================================
+      // 1. SUPORTE A AVATAR VIA BASE64 (enviado pelo frontend no JSON)
+      // ============================================================
+      if (avatar_base64) {
+        try {
+          // Remove o prefixo "data:image/...;base64," se existir
+          const base64Data = avatar_base64.replace(/^data:image\/\w+;base64,/, '');
+          // Gera um nome único para o arquivo (timestamp)
+          const filename = `avatar-${Date.now()}.jpg`;
+          const filepath = path.join(uploadDir, filename);
+          
+          // Salva o arquivo no disco (writeFileSync com base64)
+          fs.writeFileSync(filepath, base64Data, 'base64');
+          novoAvatar = `/uploads/${filename}`;
+          console.log(`Avatar salvo via base64: ${filepath}`);
+        } catch (err) {
+          console.error('Erro ao salvar avatar base64:', err);
+          return res.status(500).json({ erro: "Erro ao processar a imagem." });
+        }
+      }
+
+      // ============================================================
+      // 2. SUPORTE A AVATAR VIA FORMDATA (multer) – mantido para compatibilidade
+      // ============================================================
       if (req.file) {
+        // Se o usuário já tinha um avatar, remove o arquivo antigo
         if (usuario.avatar_url) {
           const fotoAntiga = path.join(__dirname, "..", "..", usuario.avatar_url);
           if (fs.existsSync(fotoAntiga)) fs.unlinkSync(fotoAntiga);
@@ -296,6 +330,9 @@ module.exports = {
         novoAvatar = `/uploads/${req.file.filename}`;
       }
 
+      // ============================================================
+      // 3. ATUALIZA OS DADOS DO USUÁRIO
+      // ============================================================
       await usuario.update({
         nome: nome ?? usuario.nome,
         email: email ?? usuario.email,
@@ -303,10 +340,12 @@ module.exports = {
         avatar_url: novoAvatar,
       });
 
+      // Remove a senha do objeto retornado (segurança)
       const user = usuario.toJSON();
       delete user.senha;
       return res.json(user);
     } catch (error) {
+      console.error('[atualizar] Erro:', error);
       return res.status(500).json({ erro: error.message });
     }
   },

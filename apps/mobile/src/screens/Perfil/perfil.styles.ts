@@ -65,6 +65,13 @@ interface PerfilStyle {
   modalButtonCancel: ViewStyle;
   modalButtonSave: ViewStyle;
   modalButtonText: TextStyle;
+
+  // ============================================================
+  // NOVOS ESTILOS PARA SELETOR DE AVATAR (UPLOAD DE FOTO)
+  // ============================================================
+  avatarPicker: ViewStyle;             // Container do seletor de avatar (botão + imagem)
+  avatarPickerImage: ImageStyle;       // Imagem do avatar (prévia) no seletor
+  avatarPickerText: TextStyle;         // Texto "Alterar Foto" abaixo da imagem
 }
 
 // ============================================================
@@ -239,13 +246,10 @@ export const styles = StyleSheet.create<PerfilStyle>({
   // ÚLTIMOS ACESSOS – LISTA VERTICAL SEM ÍCONES
   // ============================================================
 
-  // Container da lista (coluna única)
   habitsList: {
     flexDirection: 'column',
     width: '100%',
   },
-
-  // Cada item da lista: apenas texto (nome + XP)
   habitItemVertical: {
     backgroundColor: '#F9FAFB',
     borderRadius: 16,
@@ -255,27 +259,25 @@ export const styles = StyleSheet.create<PerfilStyle>({
     borderColor: '#E5E7EB',
     width: '100%',
   },
-
-  // Container das informações (nome + XP)
   habitInfoVertical: {
     flexDirection: 'column',
     width: '100%',
   },
-
-  // Nome do hábito (16px, negrito)
   habitLabelVertical: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.textDark,
     marginBottom: 2,
   },
-
-  // XP ganho (14px, cor primária)
   habitXpVertical: {
     fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
   },
+
+  // ============================================================
+  // NOVOS ESTILOS ADICIONADOS (CABEÇALHO, ÍCONE DE EDIÇÃO, ETC.)
+  // ============================================================
 
   cardHeader: {
     flexDirection: 'row',
@@ -370,5 +372,36 @@ export const styles = StyleSheet.create<PerfilStyle>({
     fontSize: 16,
     fontWeight: '600',
     color: colors.white,
+  },
+
+  // ============================================================
+  // ESTILOS DO SELETOR DE AVATAR (UPLOAD DE FOTO) – NOVOS
+  // ============================================================
+
+  // Container que agrupa a imagem e o texto "Alterar Foto"
+  // Centraliza os elementos e adiciona espaçamento inferior.
+  avatarPicker: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+
+  // Imagem do avatar no seletor: 100x100, circular, com borda azul.
+  // Se o usuário já tiver uma foto, mostra a foto atual; senão, mostra o fallback.
+  avatarPickerImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50, // Metade da largura = círculo perfeito
+    borderWidth: 2,
+    borderColor: colors.primary,
+    marginBottom: 10,
+  },
+
+  // Texto "Alterar Foto" abaixo da imagem.
+  // Estilizado como link (sublinhado, cor primária) para indicar clicabilidade.
+  avatarPickerText: {
+    color: colors.primary,
+    fontWeight: '600',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });
