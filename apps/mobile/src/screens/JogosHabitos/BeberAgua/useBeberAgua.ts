@@ -288,12 +288,10 @@ export const useBeberAgua = () => {
   
 
   // ============================================================
-  // FUNÇÃO: handleReset (Zerar Registro) — CORRIGIDA
+  // FUNÇÃO: handleReset (Zerar Registro) 
   // ============================================================
   // Responsabilidade: Deletar TODOS os consumos de água de hoje
   // no backend e resetar o estado local.
-  // Antes só resetava o estado local, agora é PERSISTENTE.
-  // Uso: chamado pelo botão "Zerar Registro" na UI.
   const handleReset = async () => {
     // Confirmação antes de deletar (UX)
     Alert.alert(
@@ -366,7 +364,7 @@ export const useBeberAgua = () => {
     selectedDrink,               // Bebida selecionada
     volumeSelecionado,           // Volume selecionado
     history,                     // Histórico de consumos
-    loading,                     // Carregando?
+    loading,                     // Carregando
     handleAdicionarBebida,       // Registra novo consumo
     handleSelectDrink,           // Seleciona tipo de bebida
     toggleDropdown,              // Abre/fecha dropdown

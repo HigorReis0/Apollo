@@ -87,6 +87,7 @@ module.exports = {
         ? Math.round(totalTodasPaginas / todasSessoes.length)
         : 0;
 
+      // MATÉRIA DE ANÁLISE DE DADOS!
       // ── CONSULTA 5: Último livro lido ──
       // Busca o registro de leitura mais recente com JOIN no livro
       const ultimaSessao = await Leitura.findOne({
