@@ -1,140 +1,244 @@
+// ============================================================
+// IMPORTAÇÕES (Models e configuração)
+// ============================================================
+// Model ConsumoAgua: representa a tabela tab_consumo_agua
 const ConsumoAgua = require("../models/ConsumoAgua");
+
+// Model XpLog: representa a tabela tab_xp_log (para registrar XP)
 const XpLog = require("../models/XpLog");
+
+// Model Motivo: representa a tabela tab_motivo (catálogo de XP)
 const Motivo = require("../models/Motivo");
+
+// Instância do Sequelize (conexão com PostgreSQL)
+// Usado aqui para criar TRANSACTIONS ACID
 const sequelize = require("../config/database");
+
+// Operadores Sequelize para queries complexas
+// Op.gte = "greater than or equal" (>=)
 const { Op } = require("sequelize");
 
 // ============================================================
 // CONSTANTES DE DOMÍNIO
-// IDs fixos que referenciam registros da tabela tab_motivo.
-// Centralizar aqui evita números mágicos espalhados no código
-// (princípio Clean Code — Martin, 2008).
 // ============================================================
-const ID_MOTIVO_REGISTRO_AGUA = 1; // "Registro de Água"     → 20 XP
-const ID_MOTIVO_META_DIARIA   = 3; // "Meta Diária Hidratação" → 50 XP
-const META_DIARIA_ML          = 2000; // Meta: 2 litros por dia
+// Nunca hardcoded! Valores são centralizados para fácil manutenção
+// Referem-se aos IDs na tabela tab_motivo
 
+// ID do motivo "Registro de Água" (20 XP base)
+const ID_MOTIVO_REGISTRO_AGUA = 1;
+
+// ID do motivo "Meta Hidratação Batida" (50 XP bônus)
+const ID_MOTIVO_META_DIARIA = 3;
+
+// Meta diária de hidratação em mililitros (2 litros)
+const META_DIARIA_ML = 2000;
+
+// ============================================================
+// CONTROLLER: consumoAguaController
+// ============================================================
+// Responsabilidade: Gerenciar hidratação com gamificação
+// Registra consumos e concede XP de forma ATÔMICA
 module.exports = {
 
   // ============================================================
   // MÉTODO: registrarConsumo
   // Rota: POST /agua/registrar
-  // Registra o consumo de água e o XP correspondente de forma
-  // atômica usando Transaction ACID do Sequelize + PostgreSQL.
-  // Se qualquer etapa falhar, ROLLBACK desfaz tudo — garantindo
-  // que nunca haverá consumo sem XP ou XP sem consumo.
-  // Princípio: Atomicity do modelo ACID (Gray, 1981).
   // ============================================================
+  // O que faz:
+  // 1. Registra um consumo de bebida atomicamente
+  // 2. Concede XP pelo registro (20 XP)
+  // 3. Verifica se atingiu meta (2000ml?)
+  // 4. Se sim, concede bônus (50 XP) — mas apenas UMA VEZ por dia
+  //
+  // POR QUE TRANSACTION ACID?
+  // Imagine um servidor que FALHA no meio:
+  // - Consumo registrado, mas XP não 
+  // - Resultado: usuário vê consumo, mas XP não apareceu!
+  //
+  // Com Transaction:
+  // - Tudo registra (commit) OU nada registra (rollback)
+  // - Garantia ACID: Atomicity
   async registrarConsumo(req, res) {
 
-    // Inicia a transação — todas as operações abaixo fazem parte deste bloco atômico
+    // ============================================================
+    // INICIA TRANSACTION ACID
+    // ============================================================
+    // Todas as operações SQL abaixo executam em um "bloco" atômico
+    // Se qualquer falhar, o ROLLBACK desfaz TUDO
     const t = await sequelize.transaction();
 
     try {
-      // usuario_id é injetado pelo authMiddleware após validar o JWT
+      // ============================================================
+      // EXTRAÇÃO DE DADOS
+      // ============================================================
+      // usuario_id: vem do middleware de autenticação (JWT validado)
       // Nunca confiamos no ID enviado pelo frontend (Zero Trust)
       const usuario_id = req.usuarioId;
 
-      // Extrai os dados enviados pelo app
+      // tipo_bebida: tipo de bebida (ex: "Água", "Café", "Refrigerante")
+      // quantidade_ml: quantidade em mililitros (ex: 200)
       const { tipo_bebida, quantidade_ml } = req.body;
 
-      // Validação Fail Fast: rejeita imediatamente se faltar o campo obrigatório
+      // ============================================================
+      // VALIDAÇÃO FAIL FAST
+      // ============================================================
+      // Rejeita imediatamente se faltar quantidade_ml
+      // É antes do banco, mas ainda dentro da transaction
       if (!quantidade_ml) {
+        // Cancela a transaction se a validação falhar
         await t.rollback();
-        return res.status(400).json({ erro: "Dados insuficientes (quantidade_ml é obrigatória)." });
+        return res.status(400).json({ 
+          erro: "Dados insuficientes (quantidade_ml é obrigatória)." 
+        });
       }
 
-      // ── PASSO 1: Registra o consumo na tabela tab_consumo_agua ──
-      // Tudo dentro da transaction — se falhar, o ROLLBACK desfaz este INSERT
+      // ============================================================
+      // PASSO 1: Registra o consumo na tabela tab_consumo_agua
+      // ============================================================
+      // INSERT INTO tab_consumo_agua (usuario_id, tipo_bebida, quantidade_ml, data_hora)
+      // { transaction: t } = executa DENTRO da transaction
+      // Se algum passo abaixo falhar, este INSERT será desfeito
       const consumo = await ConsumoAgua.create({
         usuario_id,
-        tipo_bebida: tipo_bebida || "Água", // Se não informado, assume "Água"
-        quantidade_ml
-      }, { transaction: t });
+        tipo_bebida: tipo_bebida || "Água",    // Default para "Água" se não informado
+        quantidade_ml                           // Quantidade em ml
+      }, { transaction: t });                  // ← Executa na transaction!
 
-      // ── PASSO 2: Busca o motivo de XP no banco ──
-      // O servidor busca o xp_padrao — nunca aceitamos o valor vindo do cliente
-      // Isso impede que um usuário mal-intencionado envie xp_ganho: 99999
-      const motivoRegistro = await Motivo.findByPk(ID_MOTIVO_REGISTRO_AGUA, { transaction: t });
+      // ============================================================
+      // PASSO 2: Busca o motivo de XP no banco
+      // ============================================================
+      // O servidor decide o valor do XP, não o cliente!
+      // SELECT * FROM tab_motivo WHERE motivo_id = 1
+      // Resultado: { motivo_id: 1, xp_padrao: 20, nome_motivo: "Registro de Água" }
+      const motivoRegistro = await Motivo.findByPk(ID_MOTIVO_REGISTRO_AGUA, { 
+        transaction: t 
+      });
+      
+      // Validação: motivo existe?
       if (!motivoRegistro) {
-        await t.rollback();
-        return res.status(404).json({ erro: "Motivo de XP não encontrado. Verifique a tabela tab_motivo." });
+        await t.rollback();  // Desfaz o consumo que foi inserido acima
+        return res.status(404).json({ 
+          erro: "Motivo de XP não encontrado. Verifique a tabela tab_motivo." 
+        });
       }
 
-      // ── PASSO 3: Registra o XP pelo registro de consumo ──
-      // xp_ganho vem do banco (motivoRegistro.xp_padrao), não do frontend
+      // ============================================================
+      // PASSO 3: Registra o XP na tabela tab_xp_log
+      // ============================================================
+      // INSERT INTO tab_xp_log (usuario_id, id_motivo, xp_ganho, data_hora)
+      // xp_ganho = motivoRegistro.xp_padrao (20, decidido pelo servidor!)
       await XpLog.create({
         usuario_id,
-        id_motivo: motivoRegistro.motivo_id,
-        xp_ganho:  motivoRegistro.xp_padrao
-      }, { transaction: t });
+        id_motivo: motivoRegistro.motivo_id,  // ID do motivo
+        xp_ganho: motivoRegistro.xp_padrao    // Valor do banco (20 XP)
+      }, { transaction: t });                 // ← Executa na transaction!
 
-      // ── PASSO 4: Verifica se o usuário atingiu a meta diária ──
-      // Define o início do dia atual (meia-noite) para filtrar apenas registros de hoje
+      // ============================================================
+      // PASSO 4: Verifica se o usuário atingiu a meta diária
+      // ============================================================
+      // Define o início do dia (00:00:00) para filtrar apenas HOJE
       const inicioDia = new Date();
       inicioDia.setHours(0, 0, 0, 0);
 
-      // Soma todos os ml registrados hoje (inclui o consumo que acabou de ser inserido)
+      // Soma todos os ml registrados HOJE (INCLUINDO o que acabou de ser inserido)
+      // SUM(quantidade_ml) WHERE usuario_id = ? AND data_hora >= 2026-06-30 00:00:00
       const totalHoje = await ConsumoAgua.sum("quantidade_ml", {
         where: {
           usuario_id,
-          data_hora: { [Op.gte]: inicioDia } // Op.gte = "greater than or equal" (>=)
+          data_hora: { [Op.gte]: inicioDia }  // >= hoje meia-noite
         },
         transaction: t
       });
 
-      // Garante que totalHoje nunca seja null (caso seja o primeiro registro do dia)
+      // Se não há registros, totalHoje é null — fallback para 0
+      // Depois soma o consumo atual (já inserido acima)
       const totalComAtual = (totalHoje || 0) + quantidade_ml;
-      let bonusMeta = null;
-      let motivoMeta = null;
+      
+      // Variáveis para armazenar dados do bônus
+      let bonusMeta = null;     // Valor do bônus (null se não concedeu)
+      let motivoMeta = null;    // Motivo do bônus (null se não concedeu)
 
-      // Só verifica bônus se o total atual atingiu ou ultrapassou a meta
+      // ============================================================
+      // PASSO 5: Se atingiu a meta, concede bônus (UMA VEZ por dia)
+      // ============================================================
+      // Só processa se o total atingiu ou ultrapassou 2000ml
       if (totalComAtual >= META_DIARIA_ML) {
 
-        // Verifica se o bônus já foi concedido hoje — evita duplicidade
-        // data_hora é o nome real da coluna no banco (tab_xp_log)
+        // Verifica se o bônus já foi concedido HOJE
+        // SELECT * FROM tab_xp_log 
+        // WHERE usuario_id = ? AND id_motivo = 3 AND data_hora >= 2026-06-30 00:00:00
         const bonusJaConcedido = await XpLog.findOne({
           where: {
             usuario_id,
-            id_motivo: ID_MOTIVO_META_DIARIA,
-            data_hora: { [Op.gte]: inicioDia } // Filtra apenas registros de hoje
+            id_motivo: ID_MOTIVO_META_DIARIA,  // ID do motivo bônus
+            data_hora: { [Op.gte]: inicioDia }  // Filtra apenas de hoje
           },
           transaction: t
         });
 
-        // Só concede o bônus se ainda não foi dado hoje (idempotência)
+        // Se o bônus ainda NÃO foi concedido hoje, concede agora!
+        // Princípio: Idempotência (não fazer 2x o mesmo bônus)
         if (!bonusJaConcedido) {
-          motivoMeta = await Motivo.findByPk(ID_MOTIVO_META_DIARIA, { transaction: t });
+          
+          // Busca o motivo do bônus no banco
+          motivoMeta = await Motivo.findByPk(ID_MOTIVO_META_DIARIA, { 
+            transaction: t 
+          });
+          
+          // Se o motivo existe, registra o bônus
           if (motivoMeta) {
+            // INSERT INTO tab_xp_log (usuario_id, id_motivo, xp_ganho)
             bonusMeta = await XpLog.create({
               usuario_id,
-              id_motivo: motivoMeta.motivo_id,
-              xp_ganho:  motivoMeta.xp_padrao // Bônus de 50 XP vindo do banco
+              id_motivo: motivoMeta.motivo_id,   // ID do motivo bônus (3)
+              xp_ganho: motivoMeta.xp_padrao     // 50 XP (valor do banco!)
             }, { transaction: t });
           }
         }
       }
 
-      // ── PASSO 5: Commit ──
-      // Confirma todas as operações no banco de uma vez
-      // Se chegou aqui, tudo deu certo — persiste o consumo + XP + bônus (se houver)
+      // ============================================================
+      // COMMIT: Tudo deu certo!
+      // ============================================================
+      // Confirma TODAS as operações acima:
+      // - INSERT consumo
+      // - INSERT xp_log (registro)
+      // - INSERT xp_log (bônus, se aplicável)
+      // Tudo persiste no PostgreSQL de uma vez
       await t.commit();
 
-      // Retorna resposta com os dados do registro e informações de gamificação
+      // ============================================================
+      // RETORNO: Sucesso com informações de gamificação
+      // ============================================================
       return res.status(201).json({
-        consumo,
-        xp_ganho:   motivoRegistro.xp_padrao,
-        bonus_meta: bonusMeta && motivoMeta ? motivoMeta.xp_padrao : null,
-        mensagem:   bonusMeta
+        consumo,                                           // Consumo registrado
+        xp_ganho: motivoRegistro.xp_padrao,               // 20 XP base
+        bonus_meta: bonusMeta && motivoMeta 
+          ? motivoMeta.xp_padrao                          // 50 XP bônus (ou null)
+          : null,
+        mensagem: bonusMeta
           ? "Meta diária atingida! Bônus de XP concedido."
           : "Consumo registrado com sucesso."
       });
 
     } catch (error) {
-      // ROLLBACK — desfaz todas as operações da transaction em caso de qualquer erro
-      // Garante que o banco nunca fique em estado inconsistente
+      // ============================================================
+      // ROLLBACK: Algo deu errado!
+      // ============================================================
+      // Desfaz TODAS as operações da transaction
+      // O banco volta ao estado ANTERIOR a este registrarConsumo
+      //
+      // Exemplo: Se falhar no PASSO 5:
+      // - Consumo inserido no PASSO 1? Desfeito
+      // - XP inserido no PASSO 3? Desfeito
+      // - Bônus inserido no PASSO 5? Desfeito 
+      // Resultado: banco limpo, como se nada tivesse acontecido
       await t.rollback();
+      
+      // Log detalhado do erro (para debugging)
       console.error("ERRO DETALHADO /agua/registrar:", error);
+      
+      // Retorna erro para o frontend
       return res.status(500).json({ erro: error.message });
     }
   },
@@ -142,36 +246,55 @@ module.exports = {
   // ============================================================
   // MÉTODO: listarConsumoHoje
   // Rota: GET /agua/hoje
-  // Retorna todos os registros de consumo do dia atual junto
-  // com o total em ml e o percentual em relação à meta diária.
-  // Usado pelo frontend para exibir o progresso na tela.
   // ============================================================
+  // O que faz:
+  // Retorna TODOS os consumos do dia atual + total + percentual
+  // Usado pelo frontend para renderizar o histórico e a barra de progresso
   async listarConsumoHoje(req, res) {
     try {
+      // usuario_id do middleware de autenticação
       const usuario_id = req.usuarioId;
 
-      // Define o início do dia (meia-noite) para filtrar apenas registros de hoje
+      // ============================================================
+      // Define o início do dia (00:00:00)
+      // ============================================================
       const inicioDia = new Date();
       inicioDia.setHours(0, 0, 0, 0);
 
-      // Busca todos os registros de hoje ordenados do mais recente para o mais antigo
+      // ============================================================
+      // Busca todos os consumos de HOJE
+      // ============================================================
+      // SELECT * FROM tab_consumo_agua 
+      // WHERE usuario_id = ? AND data_hora >= 2026-06-30 00:00:00
+      // ORDER BY data_hora DESC
       const consumos = await ConsumoAgua.findAll({
         where: {
           usuario_id,
-          data_hora: { [Op.gte]: inicioDia }
+          data_hora: { [Op.gte]: inicioDia }  // >= hoje meia-noite
         },
-        order: [["data_hora", "DESC"]]
+        order: [["data_hora", "DESC"]]         // Mais recente primeiro
       });
 
-      // Calcula o total do dia somando todos os registros (paradigma funcional — reduce)
+      // ============================================================
+      // Calcula o total do dia (paradigma funcional — reduce)
+      // ============================================================
+      // reduce: agrega array em um valor único
+      // acc = acumulador (começa em 0)
+      // c = consumo atual
+      // Exemplo: [200, 150, 600] → 950 ml
       const totalMl = consumos.reduce((acc, c) => acc + c.quantidade_ml, 0);
 
-      // Retorna os dados formatados para o frontend renderizar a barra de progresso
+      // ============================================================
+      // Retorna os dados formatados para o frontend
+      // ============================================================
       return res.json({
-        consumos,
-        total_ml:   totalMl,
-        meta_ml:    META_DIARIA_ML,
-        percentual: Math.min(Math.round((totalMl / META_DIARIA_ML) * 100), 100) // Limitado a 100%
+        consumos,                                              // Array de consumos
+        total_ml: totalMl,                                     // Total em ml
+        meta_ml: META_DIARIA_ML,                               // Meta (2000ml)
+        percentual: Math.min(                                   // Percentual 0-100%
+          Math.round((totalMl / META_DIARIA_ML) * 100),       // Cálculo
+          100                                                   // Limitado a 100%
+        )
       });
 
     } catch (error) {
