@@ -2,7 +2,7 @@
   "expo": {
     "name": "Apollo",
     "slug": "apollo",
-    "icon": "./assets/homem_sentado_login.png",
+    "icon": "./assets/logoApollo.png",
     "scheme": "apollo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +13,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/logoApollo.png",
+        "backgroundColor": "#E2E8F0"
       },
       "package": "com.caiotrajano.apollo"
     },

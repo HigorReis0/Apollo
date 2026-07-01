@@ -48,11 +48,6 @@ const leituraController = {
       // ============================================================
       // EXTRAÇÃO DOS DADOS
       // ============================================================
-      // nome_livro: nome do livro (ex: "O Hobbit")
-      // paginas_lidas: quantas páginas foram lidas (ex: 45)
-      // nota: nota/reflexão sobre a leitura (opcional)
-      // id_livro_lido: ID do livro (compatibilidade, versão antiga)
-      // autor: autor do livro (novo campo, agora capturam a autoria!)
       const { nome_livro, paginas_lidas, nota, id_livro_lido, autor } = req.body;
       
       // Log para debugging
