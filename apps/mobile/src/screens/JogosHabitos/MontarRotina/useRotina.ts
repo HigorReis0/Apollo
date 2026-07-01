@@ -1,6 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { api } from '../../../services/api';
+
+// ============================================================
+// INTERFACES
+// ============================================================
 
 export interface HabitoItem {
   id: string;
@@ -10,59 +15,107 @@ export interface HabitoItem {
   categoria: string;
 }
 
+// ============================================================
+// HOOK: useRotina
+// ============================================================
 export const useRotina = () => {
   const navigation = useNavigation();
 
-  // Estado que armazena o array de hábitos do sistema com seus respectivos status de ativação.
-  const [habitos, setHabitos] = useState<HabitoItem[]>([
-    { id: '1', titulo: 'Beber Água', xp: 100, ativo: true, categoria: 'Saúde' },
-    { id: '2', titulo: 'Leitura', xp: 80, ativo: true, categoria: 'Mente' },
-    { id: '3', titulo: 'Musculação', xp: 150, ativo: false, categoria: 'Corpo' },
-    { id: '4', titulo: 'Correr', xp: 200, ativo: false, categoria: 'Corpo' },
-    { id: '5', titulo: 'Sono Regulado', xp: 120, ativo: true, categoria: 'Saúde' },
-    { id: '6', titulo: 'Arrumar a Cama', xp: 50, ativo: true, categoria: 'Foco' },
-    { id: '7', titulo: 'Meditar', xp: 100, ativo: false, categoria: 'Mente' },
-    { id: '8', titulo: 'Saúde Bucal', xp: 50, ativo: true, categoria: 'Saúde' },
-  ]);
+  const [habitos, setHabitos] = useState<HabitoItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Função que inverte o status de ativação de um hábito baseado no ID recebido.
-  const alternarHabito = (id: string) => {
-    const novaLista = habitos.map((habito) => {
-      if (habito.id === id) {
-        return { ...habito, ativo: !habito.ativo };
-      }
-      return habito;
-    });
-    setHabitos(novaLista);
+  // ============================================================
+  // FUNÇÃO: carregarHabitos
+  // ============================================================
+  const carregarHabitos = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/habitos');
+      
+      const dados = res.data.map((h: any) => ({
+        id: String(h.habito_id),      // Garante que seja string
+        titulo: h.nome,
+        xp: h.xp_base,
+        categoria: h.descricao || 'Geral',
+        ativo: false
+      }));
+
+      // Remove duplicatas baseado no ID
+      const uniqueMap = new Map<string, HabitoItem>();
+      dados.forEach((item: HabitoItem) => {
+        if (!uniqueMap.has(item.id)) {
+          uniqueMap.set(item.id, item);
+        }
+      });
+
+      setHabitos(Array.from(uniqueMap.values()));
+    } catch (error: any) {
+      console.error(
+        '[useRotina] Erro ao carregar hábitos:',
+        error?.response?.data || error.message
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Calcula dinamicamente o XP máximo somando apenas os valores dos hábitos que estão ativos.
-  const xpTotalDisponivel = habitos.reduce((acumulador, habito) => {
-    return habito.ativo ? acumulador + habito.xp : acumulador;
-  }, 0);
+  useEffect(() => {
+    carregarHabitos();
+  }, []);
 
-  // Função disparada ao clicar no botão de salvar a configuração da rotina.
-  const salvarRotina = () => {
-    const totalAtivos = habitos.filter(h => h.ativo).length;
-
-    if (totalAtivos === 0) {
-      Alert.alert("Aviso", "Selecione pelo menos um hábito para compor a sua rotina diária!");
-      return;
-    }
-
-    Alert.alert(
-      "Rotina Pronta!",
-      `Sua rotina foi salva com ${totalAtivos} hábitos ativos. Meta de hoje: buscar +${xpTotalDisponivel} XP!`,
-      [{ text: "Confirmar", onPress: () => navigation.goBack() }]
+  const alternarHabito = (id: string) => {
+    setHabitos(prev =>
+      prev.map(habito =>
+        habito.id === id
+          ? { ...habito, ativo: !habito.ativo }
+          : habito
+      )
     );
   };
 
-  const handleGoBack = () => {
-    navigation.goBack();
+  const xpTotalDisponivel = habitos.reduce(
+    (acc, habito) => habito.ativo ? acc + habito.xp : acc, 0
+  );
+
+  const salvarRotina = async () => {
+    const habitosAtivos = habitos.filter(h => h.ativo);
+
+    if (habitosAtivos.length === 0) {
+      Alert.alert(
+        "Aviso",
+        "Selecione pelo menos um hábito para compor a sua rotina diária!"
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await api.post('/habitos/rotina', {
+        habitos_ids: habitosAtivos.map(h => h.id)
+      });
+
+      Alert.alert(
+        "Rotina Pronta! 🚀",
+        `Sua rotina foi salva com ${habitosAtivos.length} hábitos ativos. Meta de hoje: +${xpTotalDisponivel} XP!`,
+        [{ text: "Confirmar", onPress: () => navigation.goBack() }]
+      );
+
+    } catch (error: any) {
+      Alert.alert(
+        "Erro",
+        "Não foi possível salvar a rotina. Verifique sua conexão."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleGoBack = () => navigation.goBack();
 
   return {
     habitos,
+    loading,
     xpTotalDisponivel,
     alternarHabito,
     salvarRotina,

@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Image,
+  TextInput,
+} from 'react-native';
 import { styles } from './meditar.styles';
 import { Header } from '../../../components/Header';
 import { useMeditar } from './useMeditar';
@@ -7,7 +15,6 @@ import { useMeditar } from './useMeditar';
 // @ts-ignore
 import imgMeditacao from '../../../../assets/meditacao.png';
 
-// Tipagem extraída de forma dinâmica e automatizada do Hook
 type MeditarViewProps = ReturnType<typeof useMeditar>;
 
 export const MeditarView: React.FC<MeditarViewProps> = ({
@@ -17,6 +24,9 @@ export const MeditarView: React.FC<MeditarViewProps> = ({
   selecionarDuracao,
   toggleTimer,
   handleGoBack,
+  inputMinutos,
+  setInputMinutos,
+  definirTempoPersonalizado,
 }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -53,6 +63,29 @@ export const MeditarView: React.FC<MeditarViewProps> = ({
               </Text>
             </TouchableOpacity>
           ))}
+        </View>
+
+        {/* ============================================================
+            SEÇÃO: TEMPO PERSONALIZADO
+            Campo para o usuário digitar o tempo desejado em minutos.
+            ============================================================ */}
+        <View style={styles.customInputContainer}>
+          <TextInput
+            style={styles.customInput}
+            placeholder="Digite minutos (ex.: 7)"
+            placeholderTextColor="#9CA3AF"
+            keyboardType="numeric"
+            value={inputMinutos}
+            onChangeText={setInputMinutos}
+            editable={!isAtivo}
+          />
+          <TouchableOpacity
+            style={[styles.customButton, !isAtivo && styles.customButtonActive]}
+            onPress={definirTempoPersonalizado}
+            disabled={isAtivo}
+          >
+            <Text style={styles.customButtonText}>Definir</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Botão de Controle Principal (Play / Pause) */}

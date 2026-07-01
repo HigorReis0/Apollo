@@ -4,5 +4,6 @@ import { usePerfil } from './usePerfil';
 
 export default function ProfileScreen() {
   const perfilProps = usePerfil();
-  return <ProfileView perfil={perfilProps} />;
+  const ProfileViewComponent = ProfileView as React.ComponentType<any>;
+  return <ProfileViewComponent perfil={perfilProps} />;
 }

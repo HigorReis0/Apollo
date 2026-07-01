@@ -50,7 +50,7 @@ export const LoginView = ({ auth }: LoginViewProps) => {
                 <CustomButton title="Entrar" onPress={auth.handleLogin} variant="primary" />
                 <CustomButton 
                   title="Entrar com Google" 
-                  onPress={() => auth.promptAsync()} 
+                  onPress={auth.handleGoogleLogin} 
                   variant="secondary"
                   disabled={!auth.requestReady}
                 />

@@ -22,6 +22,8 @@ import imgPerfil from '../../../assets/imagemExemploPerfil.png';
 
 interface TelaInicialViewProps {
   habits: HabitItem[];
+  userName: string;
+  userBio: string;
   handleHabitsRedirect: () => void;
   handleHabitPress: (habitLabel: string) => void;
   handleProfileRedirect: () => void;
@@ -29,6 +31,8 @@ interface TelaInicialViewProps {
 
 export const TelaInicialView: React.FC<TelaInicialViewProps> = ({
   habits,
+  userName,
+  userBio,
   handleHabitsRedirect,
   handleHabitPress,
   handleProfileRedirect,
@@ -66,10 +70,8 @@ export const TelaInicialView: React.FC<TelaInicialViewProps> = ({
           >
             <Image source={imgPerfil} style={styles.cardAvatar} />
             <View style={styles.cardTextContainer}>
-              <Text style={styles.cardName}>Beatriz Santos</Text>
-              <Text style={styles.cardBio}>
-                Eu sou a Beatriz e eu acho que hábitos podem engradecer e organizar nossas vidas.
-              </Text>
+              <Text style={styles.cardName}>{userName}</Text>
+              <Text style={styles.cardBio}>{userBio}</Text>
             </View>
           </TouchableOpacity>
 

@@ -1,59 +1,86 @@
-// Importa a classe DataTypes do pacote sequelize para definir os tipos das colunas (ex: STRING, INTEGER)
 const { DataTypes } = require("sequelize");
-
-// Importa a instância da conexão com o banco de dados que configuramos no arquivo database.js
 const sequelize = require("../config/database");
 
-// Define o modelo "Usuario", que representa a estrutura de um usuário no código
+// ============================================================
+// MODEL: Usuario
+// Representa a tabela 'tab_usuario' no PostgreSQL.
+// Centraliza o mapeamento objeto-relacional dos dados do usuário
+// via Sequelize ORM (Fowler, "Patterns of EAA", 2002).
+// ============================================================
 const Usuario = sequelize.define(
-  "Usuario", // Nome interno do modelo dentro do Sequelize
+  "Usuario",
   {
-    // Define a coluna da Chave Primária
+    // Chave primária com auto-incremento — gerada pelo banco
     usuario_id: {
-      type: DataTypes.INTEGER, // Define o tipo como Inteiro
-      primaryKey: true,        // Indica que esta é a Chave Primária (PK)
-      autoIncrement: true,     // Indica que o banco deve gerar o ID automaticamente (SERIAL)
-      field: 'usuario_id'      // MAPEAMENTO CRUCIAL: Diz ao Sequelize que no banco o nome da coluna é exatamente este
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
     },
 
-    // Define a coluna para o nome do usuário
+    // Nome completo do usuário
     nome: {
-      type: DataTypes.STRING(100), // Define como VARCHAR(100) - mais performático que TEXT para nomes
-      allowNull: false,            // Indica que este campo é obrigatório (NOT NULL)
+      type: DataTypes.STRING(100),
+      allowNull: false,
     },
 
-    // Define a coluna para o e-mail
-    email: {
-      type: DataTypes.STRING(100), // Define como VARCHAR(100)
-      allowNull: false,            // Campo obrigatório
-      unique: true,                // Garante que não existam dois usuários com o mesmo e-mail
-    },
-
-    // Define a coluna para a senha
-    senha: {
-      type: DataTypes.STRING(255), // Define como VARCHAR(255) para suportar o hash da senha
-      allowNull: true,             // PERMISSIVO: Permite ser vazio para quem logar com o Google
-    },
-
-    // Define a coluna para o ID único fornecido pelo Google
-    google_id: {
-      type: DataTypes.STRING(255), // Define como VARCHAR(255)
-      unique: true,                // Garante que cada conta Google seja vinculada a apenas um usuário
-      allowNull: true,             // Permite ser vazio para quem criar conta apenas com e-mail/senha
-    },
-
-    // Define a coluna para a URL da foto de perfil
+    // URL da foto de perfil — pode ser null se não enviou avatar
     avatar_url: {
-      type: DataTypes.TEXT,        // Usa TEXT porque links de imagens podem ser muito longos
-      allowNull: true,             // Campo opcional
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+
+    // Email único — usado como identificador de login
+    // Constraint UNIQUE garantida no banco e no Sequelize
+    email: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: true,
+    },
+
+    // Senha com hash bcrypt — null para usuários que usam Google OAuth2
+    senha: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+
+    // ID do Google — preenchido apenas para login via Google OAuth2
+    // null para usuários com cadastro manual
+    google_id: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      unique: true,
+    },
+
+    // ============================================================
+    // NOVOS CAMPOS DE DADOS PESSOAIS
+    // Adicionados via ALTER TABLE na tab_usuario
+    // Permitem exibir e editar informações pessoais na tela de perfil
+    // ============================================================
+
+    // Data de nascimento — usada para calcular a idade dinamicamente no frontend
+    data_nascimento: {
+      type: DataTypes.DATEONLY, // Apenas data, sem hora (tipo DATE no PostgreSQL)
+      allowNull: true,
+    },
+
+    // Peso em kg — armazenado como decimal (ex: 72.5)
+    // NUMERIC(5,2) no banco: até 999.99 kg
+    peso: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: true,
+    },
+
+    // Altura em metros — armazenado como decimal (ex: 1.75)
+    // NUMERIC(4,2) no banco: até 9.99m
+    altura: {
+      type: DataTypes.DECIMAL(4, 2),
+      allowNull: true,
     },
   },
   {
-    // CONFIGURAÇÕES ADICIONAIS DO MODELO
-    tableName: "tab_usuario",      // Obriga o Sequelize a usar o nome exato da tabela que criamos no Postgres
-    timestamps: false,             // Informa que não usaremos as colunas automáticas 'createdAt' e 'updatedAt'
+    tableName: "tab_usuario", // nome real da tabela no banco
+    timestamps: false,        // sem createdAt/updatedAt automático do Sequelize
   }
 );
 
-// Exporta o modelo para que possamos usá-lo nos Controllers (para criar, buscar, deletar usuários)
 module.exports = Usuario;

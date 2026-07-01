@@ -1,73 +1,78 @@
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
+import { NavigationContainer } from '@react-navigation/native';
 
-// IMPORTAÇÃO DAS TELAS - Verifique se os nomes das pastas estão corretos (Maiúsculas/Minúsculas)
+// ── Telas principais ──
 import LoginScreen from '../screens/Login';
-import RegisterScreen from '../screens/Cadastro';
-import RecoverPasswordScreen from '../screens/RecuperacaoSenha/recuperacao_senha';
+import CadastroScreen from '../screens/Cadastro';
 import HomeScreen from '../screens/Home';
-import HabitsScreen from '../screens/Habitos/tela_habitos';
-import BeberAguaScreen from '../screens/JogosHabitos/BeberAgua';
-import ProfileScreen from '../screens/Perfil';
-import ReadingScreen from '../screens/JogosHabitos/Ler';
+import PerfilScreen from '../screens/Perfil';
+import HabitosScreen from '../screens/Habitos/tela_habitos';
+import RecuperacaoSenhaScreen from '../screens/RecuperacaoSenha/recuperacao_senha';
 
-import { colors } from '../theme/colors';
-import SonoScreen from '../screens/JogosHabitos/SonoRegulado';
+// ── Telas de hábitos ──
+import BeberAguaScreen from '../screens/JogosHabitos/BeberAgua';
+import CamaScreen from '../screens/JogosHabitos/ArrumarCama';
+import CorridaScreen from '../screens/JogosHabitos/Corrida';
 import MeditarScreen from '../screens/JogosHabitos/Meditar';
-import MontarRotinaScreen from '../screens/JogosHabitos/MontarRotina';
 import MusculacaoScreen from '../screens/JogosHabitos/Musculacao';
 import SaudeBucalScreen from '../screens/JogosHabitos/SaudeBucal';
-import CorridaScreen from '../screens/JogosHabitos/Corrida';
-import ArrumarCamaScreen from '../screens/JogosHabitos/ArrumarCama';
+import SonoReguladoScreen from '../screens/JogosHabitos/SonoRegulado';
+import LerScreen from '../screens/JogosHabitos/Ler';
+import MontarRotinaScreen from '../screens/JogosHabitos/MontarRotina';
 
-// 1. Tipagem das Rotas
+// ── Tela de relatório ──
+import RelatorioLeituraScreen from '../screens/Relatorio/relatorioLeitura.view';
+
+// ============================================================
+// TIPOS DAS ROTAS
+// Define os parâmetros aceitos por cada tela.
+// ============================================================
 export type RootStackParamList = {
   Login: undefined;
   Cadastro: undefined;
-  RecuperacaoSenha: undefined;
   Home: undefined;
-  Habitos: undefined;
-  BeberAgua: undefined;
   Perfil: undefined;
-  Ler: undefined;
+  Habitos: undefined;
+  RecuperacaoSenha: undefined;
+  BeberAgua: undefined;
+  Cama: undefined;
+  Corrida: undefined;
   Meditar: undefined;
-  MontarRotina: undefined;
   Musculacao: undefined;
   SaudeBucal: undefined;
   SonoRegulado: undefined;
-  Corrida: undefined;
-  ArrumarCama: undefined;
+  Ler: undefined;
+  MontarRotina: undefined;
+  RelatorioLeitura: undefined;
 };
 
-// 2. Criação do Stack
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   return (
-    // @ts-ignore - Essa linha ignora o erro de 'id' se ele persistir por causa de versão
-    <Stack.Navigator 
-      initialRouteName="Login"
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: colors.background },
-        animation: 'slide_from_right',
-      }}
-    >
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Cadastro" component={RegisterScreen} />
-      <Stack.Screen name="RecuperacaoSenha" component={RecoverPasswordScreen} />
-      <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="Habitos" component={HabitsScreen} />
-      <Stack.Screen name="BeberAgua" component={BeberAguaScreen} />
-      <Stack.Screen name="Perfil" component={ProfileScreen} />
-      <Stack.Screen name="Ler" component={ReadingScreen} />
-      <Stack.Screen name="Meditar" component={MeditarScreen} />
-      <Stack.Screen name="MontarRotina" component={MontarRotinaScreen} />
-      <Stack.Screen name="Musculacao" component={MusculacaoScreen} />
-      <Stack.Screen name="SaudeBucal" component={SaudeBucalScreen} />
-      <Stack.Screen name="SonoRegulado" component={SonoScreen} />
-      <Stack.Screen name="Corrida" component={CorridaScreen} />
-      <Stack.Screen name="ArrumarCama" component={ArrumarCamaScreen} />
-    </Stack.Navigator>
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="Login"             component={LoginScreen} />
+        <Stack.Screen name="Cadastro"          component={CadastroScreen} />
+        <Stack.Screen name="Home"              component={HomeScreen} />
+        <Stack.Screen name="Perfil"            component={PerfilScreen} />
+        <Stack.Screen name="Habitos"           component={HabitosScreen} />
+        <Stack.Screen name="RecuperacaoSenha"  component={RecuperacaoSenhaScreen} />
+        <Stack.Screen name="BeberAgua"         component={BeberAguaScreen} />
+        <Stack.Screen name="Cama"              component={CamaScreen} />
+        <Stack.Screen name="Corrida"           component={CorridaScreen} />
+        <Stack.Screen name="Meditar"           component={MeditarScreen} />
+        <Stack.Screen name="Musculacao"        component={MusculacaoScreen} />
+        <Stack.Screen name="SaudeBucal"        component={SaudeBucalScreen} />
+        <Stack.Screen name="SonoRegulado"      component={SonoReguladoScreen} />
+        <Stack.Screen name="Ler"               component={LerScreen} />
+        <Stack.Screen name="MontarRotina"      component={MontarRotinaScreen} />
+        <Stack.Screen name="RelatorioLeitura"  component={RelatorioLeituraScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }

@@ -1,5 +1,13 @@
-import React from 'react'; 
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Image } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Image,
+  TextInput,
+} from 'react-native';
 import { styles } from './corrida.styles';
 import { Header } from '../../../components/Header';
 import { useCorrida } from './useCorrida';
@@ -12,7 +20,10 @@ type CorridaViewProps = ReturnType<typeof useCorrida>;
 
 export const CorridaView: React.FC<CorridaViewProps> = ({
   distancia,
-  META_DIARIA,
+  metaDistancia,
+  metaInput,
+  setMetaInput,
+  salvarMeta,
   progresso,
   adicionarDistancia,
   handleGoBack,
@@ -36,17 +47,41 @@ export const CorridaView: React.FC<CorridaViewProps> = ({
           <Text style={styles.title}>Corrida</Text>
           <Text style={styles.subtitle}>"Não importa a velocidade, o importante é não parar."</Text>
 
-          {/* Seção da Barra de Progresso Dinâmica */}
+          {/* ============================================================
+              SEÇÃO: EDIÇÃO DA META (personalizada)
+              ============================================================ */}
+          <View style={styles.metaContainer}>
+            <Text style={styles.metaLabel}>Meta diária (km):</Text>
+            <View style={styles.metaRow}>
+              <TextInput
+                style={styles.metaInput}
+                keyboardType="decimal-pad"
+                value={metaInput}
+                onChangeText={setMetaInput}
+                placeholder="5.0"
+                placeholderTextColor="#999"
+              />
+              <TouchableOpacity style={styles.metaButton} onPress={() => salvarMeta(metaInput)}>
+                <Text style={styles.metaButtonText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.metaAtual}>Meta atual: {metaDistancia} km</Text>
+          </View>
+
+          {/* ============================================================
+              SEÇÃO: BARRA DE PROGRESSO
+              ============================================================ */}
           <View style={styles.progressContainer}>
             <View style={styles.progressRow}>
               <Text style={styles.progressLabel}>Progresso Diário</Text>
-              <Text style={styles.progressValue}>{distancia} / {META_DIARIA} km</Text>
+              <Text style={styles.progressValue}>{distancia} / {metaDistancia} km</Text>
             </View>
-            {/* Fundo cinza da barra (trilho) */}
             <View style={styles.progressBarBackground}>
-              {/* Preenchimento colorido que cresce conforme o estado 'distancia' */}
               <View style={[styles.progressBarFill, { width: `${Math.min(progresso, 100)}%` }]} />
             </View>
+            {distancia >= metaDistancia && (
+              <Text style={styles.metaAlcancada}>Meta diária alcançada!</Text>
+            )}
           </View>
         </View>
 

@@ -48,7 +48,7 @@ export const SaudeBucalView: React.FC<SaudeBucalViewProps> = ({
             <Text style={styles.checkItemText}>
               {escovacao ? "Dentes Escovados" : "○ Escovar os Dentes"}
             </Text>
-            <Text style={[styles.xpText, escovacao && styles.xpTextDone]}>+20 XP</Text>
+            <Text style={[styles.xpText, escovacao && styles.xpTextDone]}>+10 XP</Text>
           </TouchableOpacity>
 
           {/* Item 2: Fio Dentário */}
@@ -59,7 +59,7 @@ export const SaudeBucalView: React.FC<SaudeBucalViewProps> = ({
             <Text style={styles.checkItemText}>
               {fioDental ? "Fio Dental Utilizado" : "○ Fio Dental"}
             </Text>
-            <Text style={[styles.xpText, fioDental && styles.xpTextDone]}>+15 XP</Text>
+            <Text style={[styles.xpText, fioDental && styles.xpTextDone]}>+10 XP</Text>
           </TouchableOpacity>
 
           {/* Item 3: Elixir Bucal */}
@@ -70,7 +70,7 @@ export const SaudeBucalView: React.FC<SaudeBucalViewProps> = ({
             <Text style={styles.checkItemText}>
               {enxaguante ? "Enxaguante Bucal Utilizado" : "○ Enxaguante Bucal"}
             </Text>
-            <Text style={[styles.xpText, enxaguante && styles.xpTextDone]}>+15 XP</Text>
+            <Text style={[styles.xpText, enxaguante && styles.xpTextDone]}>+10 XP</Text>
           </TouchableOpacity>
 
         </View>
