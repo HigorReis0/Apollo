@@ -29,6 +29,12 @@ routes.post("/login-google", usuarioController.loginGoogle);
 // Retorna os dados do usuário autenticado (usa req.usuarioId do JWT)
 routes.get("/perfil", authMiddleware, usuarioController.perfil);
 
+// Retorna a meta de leitura do usuário logado
+routes.get("/meta-leitura", authMiddleware, usuarioController.obterMetaLeitura);
+
+// Atualiza a meta de leitura do usuário logado
+routes.put("/meta-leitura", authMiddleware, usuarioController.atualizarMetaLeitura);
+
 // Atualiza peso, altura e data de nascimento do usuário logado
 routes.put("/dados-pessoais", authMiddleware, usuarioController.atualizarDadosPessoais);
 

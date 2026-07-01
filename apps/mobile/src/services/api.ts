@@ -11,7 +11,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // ============================================================
 
 // URL do servidor backend.
-// - Emulador Android: use "http://10.0.2.2:3000"
 // - Dispositivo físico: use o IP da máquina na rede local (obtido via ipconfig/ifconfig).
 export const API_URL = "http://192.168.15.15:3000";
 

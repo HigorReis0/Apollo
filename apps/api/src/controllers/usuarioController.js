@@ -532,6 +532,93 @@ module.exports = {
   },
 
   // ============================================================
+  // MÉTODO: obterMetaLeitura (NOVO)
+  // Rota: GET /usuarios/meta-leitura (protegida)
+  // ============================================================
+  /*
+    O QUE FAZ?
+    - Retorna a meta mensal de páginas do usuário logado.
+    - Se o usuário não tiver meta definida, retorna 500 (valor padrão).
+
+    POR QUE ISSO É IMPORTANTE?
+    - Permite que o frontend exiba a meta atual e o percentual de progresso.
+    - A meta é personalizável, então o usuário pode definir sua própria meta.
+
+    BOA PRÁTICA:
+    - Usa a coluna `meta_leitura` da tabela `tab_usuario`.
+    - Fallback para 500 se o campo for null.
+  */
+  async obterMetaLeitura(req, res) {
+    try {
+      const usuarioId = req.usuarioId;
+
+      // Busca apenas o campo meta_leitura do usuário
+      const usuario = await Usuario.findByPk(usuarioId, {
+        attributes: ['meta_leitura']
+      });
+
+      if (!usuario) {
+        return res.status(404).json({ erro: "Usuário não encontrado" });
+      }
+
+      // Retorna a meta (se null, fallback para 500)
+      return res.json({ meta: usuario.meta_leitura || 500 });
+    } catch (error) {
+      console.error('[obterMetaLeitura] Erro:', error);
+      return res.status(500).json({ erro: error.message });
+    }
+  },
+
+  // ============================================================
+  // MÉTODO: atualizarMetaLeitura (NOVO)
+  // Rota: PUT /usuarios/meta-leitura (protegida)
+  // ============================================================
+  /*
+    O QUE FAZ?
+    - Atualiza a meta mensal de páginas do usuário.
+    - Recebe um número inteiro positivo (meta).
+
+    POR QUE ISSO É IMPORTANTE?
+    - Permite que o usuário personalize sua meta de leitura mensal.
+    - A meta é usada para calcular o percentual de progresso no relatório.
+
+    BOA PRÁTICA:
+    - Validação: meta deve ser um número positivo.
+    - Atualiza apenas o campo meta_leitura do usuário.
+  */
+  async atualizarMetaLeitura(req, res) {
+    try {
+      const usuarioId = req.usuarioId;
+      const { meta } = req.body;
+
+      // Validação: meta deve ser um número positivo
+      if (!meta || typeof meta !== 'number' || meta <= 0) {
+        return res.status(400).json({
+          erro: "Meta inválida. Deve ser um número positivo."
+        });
+      }
+
+      // Busca o usuário
+      const usuario = await Usuario.findByPk(usuarioId);
+      if (!usuario) {
+        return res.status(404).json({ erro: "Usuário não encontrado" });
+      }
+
+      // Atualiza a meta
+      await usuario.update({ meta_leitura: meta });
+
+      // Retorna a meta atualizada
+      return res.json({
+        mensagem: "Meta atualizada com sucesso!",
+        meta: meta
+      });
+    } catch (error) {
+      console.error('[atualizarMetaLeitura] Erro:', error);
+      return res.status(500).json({ erro: error.message });
+    }
+  },
+
+  // ============================================================
   // MÉTODO: deletar (DELETAR USUÁRIO)
   // Rota: DELETE /usuarios/:id (protegida)
   // ============================================================

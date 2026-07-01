@@ -9,9 +9,7 @@ export default function App() {
   return (
     // 2. Englobe toda a navegação com o Provider
     <SafeAreaProvider>
-      <NavigationContainer>
         <AppNavigator />
-      </NavigationContainer>
     </SafeAreaProvider>
   );
 }

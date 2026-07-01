@@ -12,6 +12,7 @@ const xpLogRoutes = require("./routes/xpLogRoutes");
 const consumoAguaRoutes = require("./routes/consumoAguaRoutes");
 const leituraRoutes = require("./routes/leituraRoutes");
 const habitoRoutes = require("./routes/habitoRoutes");
+const relatorioRoutes = require("./routes/relatorioRoutes")
 
 const app = express();
 
@@ -35,5 +36,6 @@ app.use("/xp", xpLogRoutes);
 app.use("/agua", consumoAguaRoutes);
 app.use("/leitura", leituraRoutes);
 app.use("/habitos", habitoRoutes);
+app.use("/relatorio", relatorioRoutes);
 
 module.exports = app;

@@ -117,12 +117,12 @@ export const useBeberAgua = () => {
       if (resposta.data.xp_ganho) {
         setPontos(prev => prev + resposta.data.xp_ganho);
         Alert.alert(
-          "Hidratação registrada! 💧",
+          "Hidratação registrada!",
           `Você consumiu ${volumeSelecionado}ml de ${selectedDrink.label}. +${resposta.data.xp_ganho} XP!`
         );
       } else {
         Alert.alert(
-          "Hidratação registrada! 💧",
+          "Hidratação registrada!",
           `Você consumiu ${volumeSelecionado}ml de ${selectedDrink.label}.`
         );
       }
@@ -130,7 +130,7 @@ export const useBeberAgua = () => {
       // 5. Verifica se bateu a meta (localmente)
       if (novoTotal >= META_DIARIA && resposta.data.bonus_meta) {
         Alert.alert(
-          "🎉 Meta Batida!",
+          "Meta Batida!",
           `Parabéns! Você atingiu sua meta diária de hidratação e ganhou +${resposta.data.bonus_meta} XP de bônus!`
         );
         setPontos(prev => prev + resposta.data.bonus_meta);

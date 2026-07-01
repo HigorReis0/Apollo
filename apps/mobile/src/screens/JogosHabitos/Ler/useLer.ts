@@ -33,12 +33,13 @@ export const useLer = () => {
   const navigation = useNavigation();
   const { registrarXP } = useRegistrarXP();
 
-  // Estados do formulário (o que o usuário digita)
+  // ---- Estados do formulário (o que o usuário digita) ----
   const [bookName, setBookName] = useState('');
+  const [author, setAuthor] = useState(''); // <-- NOVO: estado para o autor
   const [pagesRead, setPagesRead] = useState('');
   const [note, setNote] = useState('');
 
-  // Estados de dados (vindos da API)
+  // ---- Estados de dados (vindos da API) ----
   const [totalMonthPages, setTotalMonthPages] = useState(0);
   const [history, setHistory] = useState<ReadingEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -105,8 +106,10 @@ export const useLer = () => {
       setLoading(true);
 
       // 1. Persiste o registro de leitura no backend
+      // Agora enviando também o autor (se preenchido)
       await api.post('/leitura/registrar', {
         nome_livro: bookName,
+        autor: author || null, // <-- ENVIA O AUTOR (ou null se vazio)
         paginas_lidas: pages,
         nota: note || null
       });
@@ -114,15 +117,16 @@ export const useLer = () => {
       // 2. Registra o ganho de XP (motivo LEITURA) e captura o valor
       const resultado = await registrarXP(MOTIVOS_XP.LEITURA);
 
-      // 3. Limpa o formulário
+      // 3. Limpa o formulário (incluindo o autor)
       setBookName('');
+      setAuthor(''); // <-- LIMPA O AUTOR
       setPagesRead('');
       setNote('');
 
       // 4. Feedback ao usuário (com XP ganho)
       if (resultado.sucesso) {
         Alert.alert(
-          'Sucesso! 📚',
+          'Sucesso!',
           `Você leu ${pages} página(s) de "${bookName}". +${resultado.xp_ganho} XP!`
         );
       } else {
@@ -153,6 +157,8 @@ export const useLer = () => {
   return {
     bookName,
     setBookName,
+    author,               // <-- EXPORTA O AUTOR
+    setAuthor,            // <-- EXPORTA O SETTER DO AUTOR
     pagesRead,
     setPagesRead,
     note,

@@ -510,7 +510,6 @@ export const usePerfil = () => {
       // 2. Abre a galeria com as opções de edição
       console.log('Abrindo galeria...');
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Apenas imagens
         allowsEditing: true,        // Permite cortar a imagem
         aspect: [1, 1],             // Proporção 1:1 (quadrado, ideal para avatar)
         quality: 0.8,               // Qualidade da imagem (0.8 = 80%)

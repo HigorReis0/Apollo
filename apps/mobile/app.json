@@ -2,27 +2,26 @@
   "expo": {
     "name": "Apollo",
     "slug": "apollo",
-    "owner": "higorreis",
     "scheme": "apollo",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.higorreis.projetopraticando"
+      "bundleIdentifier": "com.caiotrajano.apollo"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
       },
-      "package": "com.higorreis.projetopraticando"
+      "package": "com.caiotrajano.apollo"
     },
     "plugins": [
       "expo-web-browser"
     ],
     "extra": {
       "eas": {
-        "projectId": "a2519c5c-c945-4a36-8b43-8a2ac2039eba"
+        "projectId": "caf870fb-c4b1-4301-b36e-8755c81809b3"
       }
     }
   }

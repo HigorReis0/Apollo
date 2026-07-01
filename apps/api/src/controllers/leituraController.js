@@ -17,14 +17,16 @@ const leituraController = {
   // 1. REGISTRAR SESSÃO DE LEITURA
   //    - Aceita nome_livro (cria/usa livro automaticamente) ou id_livro_lido
   //    - Transação ACID para garantir integridade (leitura + XP)
+  //    - SUPORTE AO AUTOR: agora captura e salva o autor do livro
   // ============================================================
   registrarSessao: async (req, res) => {
     // Inicia uma transação no banco (tudo ou nada)
     const t = await sequelize.transaction();
     try {
-      // Extrai os dados do corpo da requisição
-      // O front pode enviar nome_livro (string) OU id_livro_lido (number)
-      const { nome_livro, paginas_lidas, nota, id_livro_lido } = req.body;
+      // ============================================================
+      // EXTRAÇÃO DOS DADOS (incluindo autor)
+      // ============================================================
+      const { nome_livro, paginas_lidas, nota, id_livro_lido, autor } = req.body;
       console.log('[leituraController] req.body recebido:', req.body);
       
       // Obtém o ID do usuário (vem do middleware de autenticação)
@@ -73,10 +75,20 @@ const leituraController = {
           livro = await LivrosLidos.create({
             usuario_id: usuarioId,
             nome_livro: nome_livro.trim(),
-            autor: null,           // Opcional: pode ser preenchido depois
-            total_pag: null,       // Opcional: pode ser atualizado depois
-            data_inicio: new Date() // Data atual
-          }, { transaction: t });   // Tudo dentro da transação
+            autor: autor || null,           // <-- SALVA O AUTOR (se fornecido)
+            total_pag: null,                // Opcional: pode ser atualizado depois
+            data_inicio: new Date()          // Data atual
+          }, { transaction: t });            // Tudo dentro da transação
+        } else {
+          // ============================================================
+          // ATUALIZA O AUTOR SE O LIVRO JÁ EXISTIR E NÃO TIVER AUTOR
+          // ============================================================
+          // Se o usuário enviou um autor e o livro não tem autor, atualiza
+          if (autor && autor.trim() && !livro.autor) {
+            await livro.update({ 
+              autor: autor.trim() 
+            }, { transaction: t });
+          }
         }
 
         livroId = livro.id_livro_lido; // Usa o ID do livro (existente ou novo)
@@ -89,6 +101,15 @@ const leituraController = {
         });
         if (!livroExistente) {
           return res.status(404).json({ error: "Livro não encontrado ou não pertence a este usuário." });
+        }
+
+        // ============================================================
+        // ATUALIZA O AUTOR SE FOR ENVIADO
+        // ============================================================
+        if (autor && autor.trim() && !livroExistente.autor) {
+          await livroExistente.update({ 
+            autor: autor.trim() 
+          }, { transaction: t });
         }
       }
 

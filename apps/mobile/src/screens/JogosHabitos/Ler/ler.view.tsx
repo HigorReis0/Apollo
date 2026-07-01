@@ -9,6 +9,9 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../navigation/AppNavigator';
 
 import { styles } from './ler.styles';
 import { Header } from '../../../components/Header';
@@ -20,12 +23,19 @@ import imgLeitura from '../../../../assets/leitura.png';
 import { useLer } from './useLer';
 
 // ============================================================
+// TIPAGEM DA NAVEGAÇÃO
+// ============================================================
+type NavigationProp = StackNavigationProp<RootStackParamList, 'Ler'>;
+
+// ============================================================
 // INTERFACE DAS PROPS
 // Define todos os dados e funções que o componente recebe do hook.
 // ============================================================
 interface LerViewProps {
   bookName: string;
   setBookName: (value: string) => void;
+  author: string;               // <-- NOVO CAMPO
+  setAuthor: (value: string) => void; // <-- NOVO CAMPO
   pagesRead: string;
   setPagesRead: (value: string) => void;
   note: string;
@@ -44,6 +54,8 @@ interface LerViewProps {
 export const LerView: React.FC<LerViewProps> = ({
   bookName,
   setBookName,
+  author,               
+  setAuthor,            
   pagesRead,
   setPagesRead,
   note,
@@ -53,6 +65,8 @@ export const LerView: React.FC<LerViewProps> = ({
   handleAddReading,
   handleGoBack,
 }) => {
+  const navigation = useNavigation<NavigationProp>();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -102,6 +116,16 @@ export const LerView: React.FC<LerViewProps> = ({
                   onChangeText={setBookName}
                 />
 
+                {/* ============================================================
+                    NOVO CAMPO: AUTOR
+                    ============================================================ */}
+                <CustomInput
+                  label="Autor"
+                  placeholder="Ex: Machado de Assis"
+                  value={author}
+                  onChangeText={setAuthor}
+                />
+
                 <CustomInput
                   label="Páginas Lidas"
                   placeholder="Ex: 20"
@@ -129,19 +153,39 @@ export const LerView: React.FC<LerViewProps> = ({
 
               <View style={styles.divider} />
 
-              {/* Histórico */}
-              <Text style={styles.sectionTitle}>Últimas Leituras</Text>
+              {/* ============================================================
+                  SEÇÃO: ÚLTIMAS LEITURAS + BOTÃO RELATÓRIO
+                  ============================================================ */}
+              <View style={styles.historyHeader}>
+                <Text style={styles.sectionTitle}>Últimas Leituras</Text>
+                <TouchableOpacity
+                  style={styles.relatorioButton}
+                  onPress={() => navigation.navigate('RelatorioLeitura')}
+                >
+                  <Text style={styles.relatorioButtonText}>📊 Relatório</Text>
+                </TouchableOpacity>
+              </View>
 
               <View style={styles.historyList}>
                 {history && history.length > 0 ? (
                   history.map((item) => (
                     <View key={item.id_leitura} style={styles.historyItem}>
+                      {/* Nome do livro */}
                       <Text style={styles.bookTitle}>
                         {item.livro?.nome_livro || 'Livro sem nome'}
                       </Text>
+
+                      {/* Autor do livro (NOVO) */}
+                      <Text style={styles.bookAuthor}>
+                        {item.livro?.autor || 'Autor desconhecido'}
+                      </Text>
+
+                      {/* Páginas e data */}
                       <Text style={styles.bookPages}>
                         {item.pag_lidas} páginas • {new Date(item.data_hora).toLocaleDateString('pt-BR')}
                       </Text>
+
+                      {/* Nota/reflexão */}
                       {item.nota_leitura ? (
                         <Text style={styles.bookNote}>"{item.nota_leitura}"</Text>
                       ) : null}
