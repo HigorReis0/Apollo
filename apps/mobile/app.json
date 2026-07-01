@@ -2,6 +2,7 @@
   "expo": {
     "name": "Apollo",
     "slug": "apollo",
+    "icon": "./assets/homem_sentado_login.png",
     "scheme": "apollo",
     "version": "1.0.0",
     "orientation": "portrait",

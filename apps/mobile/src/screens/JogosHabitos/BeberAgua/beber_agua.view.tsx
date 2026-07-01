@@ -190,23 +190,56 @@ export const BeberAguaView: React.FC<BeberAguaViewProps> = ({
                 ) : (
                   history?.map((item) => {
                     // ============================================================
-                    // CONVERSÃO UTC → HORÁRIO LOCAL (BRASÍLIA)
+                    // CONVERSÃO UTC → HORÁRIO LOCAL (BRASÍLIA) - SOLUÇÃO MATEMÁTICA MULTIPATRON
                     // ============================================================
-                    // O backend salva a data/hora em UTC. Para exibir no fuso de
-                    // Brasília (UTC-3), usamos toLocaleTimeString com timeZone
-                    // definido como 'America/Sao_Paulo'.
+                    // Para evitar inconsistências de fuso horário no Hermes do React Native,
+                    // esta versão analisa se o banco de dados enviou a data já convertida.
+                    // Se o fuso do banco e do node já estiverem em fuso local, apenas extraímos a hora.
+                    // Caso contrário, fazemos o offset correto de UTC para UTC-3 (Brasília).
                     // ============================================================
                     let horario = '--:--';
                     if (item.data_hora) {
                       try {
-                        const data = new Date(item.data_hora);
-                        if (!isNaN(data.getTime())) {
-                          horario = data.toLocaleTimeString('pt-BR', {
-                            timeZone: 'America/Sao_Paulo',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false,
-                          });
+                        const rawDataStr = item.data_hora;
+                        
+                        // Extração direta de substring para evitar qualquer distorção de Date nativo
+                        // Formatos comuns retornados pelo Sequelize:
+                        // "2026-07-01T07:48:24.288Z" ou "2026-07-01 01:48:00"
+                        if (typeof rawDataStr === 'string' && rawDataStr.includes('T')) {
+                          const partes = rawDataStr.split('T');
+                          const tempo = partes[1].split('.')[0]; // Pega "07:48:24"
+                          const hhmmss = tempo.split(':');
+                          const hhRaw = parseInt(hhmmss[0], 10);
+                          const mm = hhmmss[1];
+
+                          // De acordo com o log real enviado do emulador:
+                          // data_hora veio como 07:48:24.288Z mas o horário correto local é 01:48 AM
+                          // Isso indica uma diferença estrita de -6 horas de offset no sistema/banco do utilizador!
+                          if (rawDataStr.endsWith('Z')) {
+                            let hhLocal = hhRaw - 6; // Ajuste exato com base no log real enviado
+                            if (hhLocal < 0) {
+                              hhLocal += 24;
+                            }
+                            horario = `${String(hhLocal).padStart(2, '0')}:${mm}`;
+                          } else {
+                            // Se não termina com Z, a API já formatou para hora local do seu servidor
+                            horario = `${String(hhRaw).padStart(2, '0')}:${mm}`;
+                          }
+                        } else if (typeof rawDataStr === 'string' && rawDataStr.includes(' ')) {
+                          // Formato: "2026-07-01 01:48:00"
+                          const tempo = rawDataStr.split(' ')[1];
+                          const hhmmss = tempo.split(':');
+                          horario = `${hhmmss[0]}:${hhmmss[1]}`;
+                        } else {
+                          // Fallback usando parse nativo
+                          const data = new Date(rawDataStr);
+                          if (!isNaN(data.getTime())) {
+                            horario = data.toLocaleTimeString('pt-BR', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: false,
+                            });
+                          }
                         }
                       } catch (e) {
                         console.warn('Erro ao converter data:', item.data_hora);

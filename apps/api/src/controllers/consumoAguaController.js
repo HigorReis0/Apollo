@@ -25,7 +25,7 @@ const { Op } = require("sequelize");
 // Referem-se aos IDs na tabela tab_motivo
 
 // ID do motivo "Registro de Água" (20 XP base)
-const ID_MOTIVO_REGISTRO_AGUA = 1;
+const ID_MOTIVO_REGISTRO_AGUA = 2;
 
 // ID do motivo "Meta Hidratação Batida" (50 XP bônus)
 const ID_MOTIVO_META_DIARIA = 3;
@@ -151,12 +151,14 @@ module.exports = {
       });
 
       // Se não há registros, totalHoje é null — fallback para 0
-      // Depois soma o consumo atual (já inserido acima)
-      const totalComAtual = (totalHoje || 0) + quantidade_ml;
+      // CORREÇÃO CRÍTICA: Forçar conversão para número pois Postgres SUM retorna string em bigint/decimal.
+      // O consumo atual já está inserido no banco de dados e computado no totalHoje da query acima!
+      const totalComAtual = Number(totalHoje) || 0;
       
       // Variáveis para armazenar dados do bônus
       let bonusMeta = null;     // Valor do bônus (null se não concedeu)
       let motivoMeta = null;    // Motivo do bônus (null se não concedeu)
+      let bonusConcedidoAgora = false; // Flag de controle explícita para o frontend
 
       // ============================================================
       // PASSO 5: Se atingiu a meta, concede bônus (UMA VEZ por dia)
@@ -193,6 +195,8 @@ module.exports = {
               id_motivo: motivoMeta.motivo_id,   // ID do motivo bônus (3)
               xp_ganho: motivoMeta.xp_padrao     // 50 XP (valor do banco!)
             }, { transaction: t });
+
+            bonusConcedidoAgora = true;
           }
         }
       }
@@ -213,6 +217,7 @@ module.exports = {
       return res.status(201).json({
         consumo,                                           // Consumo registrado
         xp_ganho: motivoRegistro.xp_padrao,               // 20 XP base
+        bonus_concedido: bonusConcedidoAgora,             // Flag booleana explícita adicionada
         bonus_meta: bonusMeta && motivoMeta 
           ? motivoMeta.xp_padrao                          // 50 XP bônus (ou null)
           : null,
@@ -291,14 +296,60 @@ module.exports = {
         consumos,                                              // Array de consumos
         total_ml: totalMl,                                     // Total em ml
         meta_ml: META_DIARIA_ML,                               // Meta (2000ml)
-        percentual: Math.min(                                   // Percentual 0-100%
+        percentual: Math.min(                                  // Percentual 0-100%
           Math.round((totalMl / META_DIARIA_ML) * 100),       // Cálculo
-          100                                                   // Limitado a 100%
+          100                                                  // Limitado a 100%
         )
       });
 
     } catch (error) {
       return res.status(500).json({ erro: error.message });
     }
-  }
+  },
+
+  // ============================================================
+  // MÉTODO: deletarConsumosHoje (NOVO)
+  // Rota: DELETE /agua/hoje
+  // ============================================================
+  /*
+    O QUE FAZ?
+    - Remove TODOS os consumos de água do dia atual para o usuário.
+    - Usado pelo frontend na função "Zerar Registro".
+    - Não afeta os logs de XP (apenas os consumos).
+
+    POR QUE ISSO É IMPORTANTE?
+    - O "Zerar Registro" no frontend deve ser persistente.
+    - Antes, apenas limpava o estado local, mas os dados
+      permaneciam no banco.
+    - Agora, deleta os registros reais do dia.
+
+    BOA PRÁTICA:
+    - Usa o mesmo filtro de data que o listarConsumoHoje.
+    - Retorna a quantidade de registros deletados.
+  */
+  async deletarConsumosHoje(req, res) {
+    try {
+      const usuario_id = req.usuarioId;
+
+      // Define o início do dia (00:00:00)
+      const inicioDia = new Date();
+      inicioDia.setHours(0, 0, 0, 0);
+
+      // Deleta todos os consumos de hoje
+      const deletados = await ConsumoAgua.destroy({
+        where: {
+          usuario_id,
+          data_hora: { [Op.gte]: inicioDia }
+        }
+      });
+
+      return res.status(200).json({
+        mensagem: `${deletados} registro(s) removido(s) do dia.`,
+        deletados
+      });
+    } catch (error) {
+      console.error('[deletarConsumosHoje] Erro:', error);
+      return res.status(500).json({ erro: error.message });
+    }
+  },
 };

@@ -7,6 +7,7 @@ import { API_URL } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -17,10 +18,10 @@ export const useLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const googleRedirectUri = "https://auth.expo.io/@higorreis/projeto-praticando";
+  const googleRedirectUri = makeRedirectUri({ useProxy: true } as any);
   const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: "892333494449-s3qviv65lhdmojbvp97upkgphlr6bj3b.apps.googleusercontent.com",
-    androidClientId: "892333494449-s3qviv65lhdmojbvp97upkgphlr6bj3b.apps.googleusercontent.com",
+    webClientId: '892333494449-s3qviv65lhdmojbvp97upkgphlr6bj3b.apps.googleusercontent.com',
+    androidClientId: '892333494449-s3qviv65lhdmojbvp97upkgphlr6bj3b.apps.googleusercontent.com',
     redirectUri: googleRedirectUri,
   });
 
@@ -86,12 +87,17 @@ export const useLogin = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    if (!request) return;
+    await promptAsync();
+  };
+
   return {
     email, setEmail,
     password, setPassword,
     isLoading,
     handleLogin,
-    promptAsync,
+    handleGoogleLogin,
     requestReady: !!request,
     navigateToCadastro: () => navigation.navigate('Cadastro'),
   };

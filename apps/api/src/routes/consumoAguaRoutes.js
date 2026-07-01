@@ -58,6 +58,8 @@ const verificarToken = require("../middlewares/auth");
 // - Gamificação: 20 XP + 50 XP bônus
 router.post("/registrar", verificarToken, consumoAguaController.registrarConsumo);
 
+router.delete("/hoje", verificarToken, consumoAguaController.deletarConsumosHoje);
+
 // ============================================================
 // GET /agua/hoje
 // ============================================================

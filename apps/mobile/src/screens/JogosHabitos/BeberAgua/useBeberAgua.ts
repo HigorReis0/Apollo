@@ -182,6 +182,8 @@ export const useBeberAgua = () => {
     try {
       // Ativa loading
       setLoading(true);
+      const volumeAdicionado = volumeSelecionado;
+      const totalAnterior = totalConsumido;
 
       // ── PASSO 1: Envia para o backend ──
       // POST /agua/registrar { tipo_bebida: "Água", quantidade_ml: 200 }
@@ -193,15 +195,17 @@ export const useBeberAgua = () => {
       // Tudo em uma TRANSACTION ACID (tudo ou nada)
       const resposta = await api.post('/agua/registrar', {
         tipo_bebida:   selectedDrink.label,        // Ex: "Água"
-        quantidade_ml: volumeSelecionado            // Ex: 200
+        quantidade_ml: volumeAdicionado            // Ex: 200
       });
+
+      console.log("[useBeberAgua] Resposta completa da API:", resposta.data);
 
       // ── PASSO 2: Atualiza estado LOCAL imediatamente ──
       // NÃO esperamos o backend retornar tudo novamente
       // Isso é padrão OTIMISTA — feedback na hora
       
       // Calcula novo total (anterior + adicionado)
-      const novoTotal = totalConsumido + volumeSelecionado;
+      const novoTotal = totalAnterior + volumeAdicionado;
       
       // Atualiza o total consumido (ex: 1800 → 2000)
       setTotalConsumido(novoTotal);
@@ -211,11 +215,11 @@ export const useBeberAgua = () => {
       setTotalMeta(Math.min((novoTotal / META_DIARIA) * 100, 100));
 
       // ── PASSO 3: Adiciona novo consumo ao histórico LOCAL ──
-      // Usa Date.now() como ID temporário (apenas para renderização)
+      // Usa Date.now() as ID temporário (apenas para renderização)
       const novoRegistro: HistoricoConsumo = {
         id_consumo_agua: Date.now(),                    // ID temporário
         tipo_bebida: selectedDrink.label,               // "Água"
-        quantidade_ml: volumeSelecionado,               // 200
+        quantidade_ml: volumeAdicionado,               // 200
         data_hora: new Date().toISOString()             // "2026-06-30T15:30:00Z"
       };
       
@@ -224,38 +228,54 @@ export const useBeberAgua = () => {
 
       // ── PASSO 4: Atualiza XP ──
       // Se o backend retornou xp_ganho, atualiza os pontos
-      if (resposta.data.xp_ganho) {
-        // Incrementa o saldo de XP (ex: 1000 → 1020)
-        setPontos(prev => prev + resposta.data.xp_ganho);
+      if (resposta.data && typeof resposta.data.xp_ganho === 'number') {
+        const xpBasico = resposta.data.xp_ganho;
         
-        // Mostra alerta com o XP ganho
-        Alert.alert(
-          "Hidratação registrada!",
-          `Você consumiu ${volumeSelecionado}ml de ${selectedDrink.label}. +${resposta.data.xp_ganho} XP!`
-        );
+        // --- CÁLCULO DE BÔNUS DE META DIÁRIA COM ALTA COMPATIBILIDADE ---
+        // Se o backend confirmou de forma direta o bónus diário através da flag 'bonus_concedido', 
+        // ou se o bónus numérico foi devolvido, ou se matematicamente o utilizador cruzou o limiar de 2000ml:
+        const bateuMetaMatematicamente = totalAnterior < META_DIARIA && novoTotal >= META_DIARIA;
+        const bônusRecebido = 
+          resposta.data.bonus_concedido === true || 
+          resposta.data.bonus_concedido === 'true' ||
+          (resposta.data.bonus_meta !== null && typeof resposta.data.bonus_meta === 'number') ||
+          bateuMetaMatematicamente;
+
+        if (bônusRecebido) {
+          const xpBonus = typeof resposta.data.bonus_meta === 'number' ? resposta.data.bonus_meta : 30; // Fallback para 30 XP
+          
+          // Incrementa os pontos locais com o básico + o bónus de meta
+          setPontos(prev => prev + xpBasico + xpBonus);
+
+          // Mostra o alerta triunfal de meta atingida imediatamente
+          Alert.alert(
+            "🎉 Meta Batida!",
+            `Parabéns! Você atingiu sua meta diária de hidratação de ${META_DIARIA}ml e ganhou +${xpBonus} XP de bônus! 🚀`
+          );
+        } else {
+          // Incrementa apenas o XP padrão do copo
+          setPontos(prev => prev + xpBasico);
+          
+          // Mostra alerta com o XP ganho ordinário
+          Alert.alert(
+            "Hidratação registrada!",
+            `Você consumiu ${volumeAdicionado}ml de ${selectedDrink.label}. +${xpBasico} XP!`
+          );
+        }
       } else {
-        // Se não retornou XP (erro/motivo não encontrado)
+        // Se não retornou XP estruturado (erro ou formato incompatível)
         Alert.alert(
           "Hidratação registrada!",
-          `Você consumiu ${volumeSelecionado}ml de ${selectedDrink.label}.`
+          `Você consumiu ${volumeAdicionado}ml de ${selectedDrink.label}.`
         );
       }
 
-      // ── PASSO 5: Verifica se bateu a meta (BÔNUS XP) ──
-      // Se o total atingiu/ultrapassou 2000ml E o backend retornou bonus_meta
-      if (novoTotal >= META_DIARIA && resposta.data.bonus_meta) {
-        // Mostra alerta de meta batida
-        Alert.alert(
-          "Meta Batida!",
-          `Parabéns! Você atingiu sua meta diária de hidratação e ganhou +${resposta.data.bonus_meta} XP de bônus!`
-        );
-        
-        // Incrementa XP com o bônus (ex: 1020 → 1070)
-        setPontos(prev => prev + resposta.data.bonus_meta);
-      }
+      // Sincroniza o histórico real com o banco de dados em segundo plano
+      await carregarDadosDoServidor();
 
     } catch (error: any) {
       // Se falhar (servidor offline, validação erro, etc)
+      console.error("[useBeberAgua] Falha ao registrar consumo:", error);
       Alert.alert(
         "Erro",
         "Não foi possível registrar o consumo. Tente novamente."
@@ -265,25 +285,51 @@ export const useBeberAgua = () => {
       setLoading(false);
     }
   };
+  
 
   // ============================================================
-  // FUNÇÃO: handleReset (Zerar Registro)
+  // FUNÇÃO: handleReset (Zerar Registro) — CORRIGIDA
   // ============================================================
-  // Reseta APENAS o estado local da UI
-  // NÃO afeta o banco de dados (dados continuam lá)
-  // Útil para testes ou simular novo dia
-  const handleReset = () => {
-    // Zera o total consumido
-    setTotalConsumido(0);
-    
-    // Limpa o histórico
-    setHistory([]);
-    
-    // Zera o percentual
-    setTotalMeta(0);
-    
-    // NÃO altera o saldo de XP (pontos)
-    // Porque o banco mantém o histórico real
+  // Responsabilidade: Deletar TODOS os consumos de água de hoje
+  // no backend e resetar o estado local.
+  // Antes só resetava o estado local, agora é PERSISTENTE.
+  // Uso: chamado pelo botão "Zerar Registro" na UI.
+  const handleReset = async () => {
+    // Confirmação antes de deletar (UX)
+    Alert.alert(
+      "Zerar Registro",
+      "Tem certeza que deseja remover todos os registros de água de hoje? Esta ação não pode ser desfeita.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Zerar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setLoading(true);
+              // Chama a rota DELETE /agua/hoje (backend)
+              await api.delete('/agua/hoje');
+              
+              // Agora zera o estado local
+              setTotalConsumido(0);
+              setHistory([]);
+              setTotalMeta(0);
+              // XP não é alterado (os XP já ganhos permanecem)
+              
+              Alert.alert("Sucesso", "Registros de hoje foram removidos.");
+            } catch (error: any) {
+              Alert.alert(
+                "Erro",
+                "Não foi possível zerar os registros. Tente novamente."
+              );
+              console.error("Erro ao deletar consumos:", error);
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   // ============================================================
@@ -326,6 +372,6 @@ export const useBeberAgua = () => {
     toggleDropdown,              // Abre/fecha dropdown
     setVolumeSelecionado,        // Atualiza volume
     handleGoBack,                // Volta
-    handleReset,                 // Reset (testes)
+    handleReset,                 // Reset 
   };
 };
